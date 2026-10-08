@@ -513,26 +513,26 @@ body.aioff #ai{display:none}
     <div class="aiinp"><input id="aiq" placeholder="问一句：坎卦怎么用？" /><button id="aisend">问</button></div>
     <details class="aiset" id="aiset">
       <summary>模型设置（可选）</summary>
-      <label for="aiEp">接口地址（兼容 OpenAI 格式，留空即用离线引擎）</label>
-      <input id="aiEp" placeholder="https://…/v1/chat/completions" autocomplete="off">
-      <label for="aiKey">API Key</label>
-      <input id="aiKey" type="password" placeholder="sk-…" autocomplete="off">
+      <label for="aiEp">接口地址（兼容通用对话接口，留空即用离线引擎）</label>
+      <input id="aiEp" placeholder="留空即用离线引擎；填入后改走远程模型" autocomplete="off">
+      <label for="aiKey">密钥</label>
+      <input id="aiKey" type="password" placeholder="留空即用离线引擎" autocomplete="off">
       <label for="aiModel">模型名</label>
-      <input id="aiModel" placeholder="gpt-4o-mini" autocomplete="off">
+      <input id="aiModel" placeholder="模型名称，留空即用默认" autocomplete="off">
       <div class="arow"><button id="aiSave">保存</button><button id="aiReset">恢复离线</button></div>
       <div class="ahint" id="aihint">离线引擎默认开启：所有回答由本站六十四卦数据当场算出，不联网、不编造，也不做占卜预测。填入接口后改走远程模型。</div>
     </details>
     <details class="aiset" id="aibugs">
       <summary>问题反馈记录（<span id="bugn">0</span>）</summary>
-      <label for="bugEp">上报地址（可选，填了才会自动 POST 每一条）</label>
-      <input id="bugEp" placeholder="https://…/bug" autocomplete="off">
+      <label for="bugEp">上报地址（可选，填了才会自动上报每一条）</label>
+      <input id="bugEp" placeholder="留空则只存在本机，不上传" autocomplete="off">
       <div class="arow">
         <button id="bugSave">保存地址</button>
-        <button id="bugExport">导出 JSON</button>
+        <button id="bugExport">导出记录</button>
         <button id="bugClear">清空记录</button>
       </div>
       <div id="buglist" class="buglist"></div>
-      <div class="ahint">用户提到「本该能用却没实现」的功能点时，会先记进这里（本地保存，刷新不丢），并即时回复「后台正在修理bug中」。填了上报地址后，每条还会同步 POST 出去。</div>
+      <div class="ahint">用户提到「本该能用却没实现」的功能点时，会先记进这里（本地保存，刷新不丢），并即时回复「后台正在修理中」。填了上报地址后，每条还会同步上报出去。</div>
     </details>
   </div>
 </div>
@@ -1479,16 +1479,16 @@ function syncTog(){
   if (at) at.classList.toggle('on', !document.body.classList.contains('aioff'));
 }
 function aiCfgUI(){
-  const c = aiCfg() || {endpoint:'', key:'', model:'gpt-4o-mini'};
+  const c = aiCfg() || {endpoint:'', key:'', model:''};
   const e = document.getElementById('aiEp'), k = document.getElementById('aiKey'), m = document.getElementById('aiModel');
   if (e) e.value = c.endpoint || '';
   if (k) k.value = c.key || '';
-  if (m) m.value = c.model || 'gpt-4o-mini';
+  if (m) m.value = c.model || '';
   const st = document.getElementById('aistat');
   if (st) st.textContent = HM(c.endpoint ? '远程模型 · ' + (c.model || '') : '离线 · 读本站数据');
 }
 function aiSaveCfg(ep, key, model){
-  try { localStorage.setItem('zy.ai', JSON.stringify({endpoint:ep||'', key:key||'', model:model||'gpt-4o-mini'})); } catch(e){}
+  try { localStorage.setItem('zy.ai', JSON.stringify({endpoint:ep||'', key:key||'', model:model||''})); } catch(e){}
   aiCfgUI();
   toast(HM(ep ? '已接上远程模型' : '已切回离线引擎'));
 }
@@ -1538,9 +1538,9 @@ function bugExport(){
     const blob = new Blob([JSON.stringify(bugLogs(), null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'zhouyi-buglog.json';
+    a.download = '读易-反馈记录.json';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    toast(HM('已导出 JSON'));
+    toast(HM('已导出记录'));
   } catch(e){ toast(HM('导出失败')); }
 }
 function aiPush(x){ aiHist.push(x); renderAI(); }
@@ -1589,7 +1589,7 @@ function initAI(){
         document.getElementById('aiModel').value.trim()
       );
     };
-    document.getElementById('aiReset').onclick = function(){ aiSaveCfg('', '', 'gpt-4o-mini'); };
+    document.getElementById('aiReset').onclick = function(){ aiSaveCfg('', '', ''); };
     aiCfgUI();
 
     /* 后台：问题反馈记录面板 */
