@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>读易 · 周易精读</title>
+<style>
+:root{
+  --paper:#F6F3EC; --card:#FFFDF8; --ink:#26221E; --ink2:#6B6459; --ink3:#948B7C;
+  --red:#9C3A2E; --blue:#2F4F6B; --line:#E5DFD2; --line2:#D6CEBD; --gold:#8A6D3B;
+  /* 五行五色：低饱和，承接宣纸底色，不走俗艳的玄学配色 */
+  --wx-wood:#4F7A63; --wx-fire:#9C3A2E; --wx-earth:#8A6D3B;
+  --wx-metal:#6E7B84; --wx-water:#2F4F6B;
+  /* 层次：侧栏比正文深一档，解决「正文与目录分不开」 */
+  --side:#EAE3D4; --hover:#EFEADD; --sel:#F5EDE4; --onink:#FFFDF8;
+  --shadow:rgba(38,34,30,.16);
+}
+body[data-theme=night]{
+  --paper:#14120F; --card:#1E1B17; --ink:#E9E3D6; --ink2:#B3AA9A; --ink3:#8A8175;
+  --red:#D97464; --blue:#8FB0CE; --line:#332E28; --line2:#463F37; --gold:#C9A460;
+  --wx-wood:#79B492; --wx-fire:#D97464; --wx-earth:#C9A460;
+  --wx-metal:#A6B2BB; --wx-water:#7FA6C7;
+  --side:#0D0B09; --hover:#241F1A; --sel:#2B2520; --onink:#14120F;
+  --shadow:rgba(0,0,0,.55);
+}
+body{transition:background .18s,color .18s}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;
+  font-size:15px; line-height:1.85;
+}
+header{
+  position:sticky;top:0;z-index:30;background:var(--paper);
+  border-bottom:1px solid var(--line2);
+  display:flex;align-items:center;gap:12px;padding:9px 20px;flex-wrap:wrap;
+}
+.logo{font-size:18px;font-weight:600;letter-spacing:2px}
+.logo small{font-size:11px;color:var(--ink3);letter-spacing:1px;margin-left:8px;font-weight:400}
+.seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.seg button{
+  background:transparent;border:0;padding:5px 11px;font-family:inherit;font-size:13px;
+  color:var(--ink2);cursor:pointer;border-right:1px solid var(--line2);white-space:nowrap;
+}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--hover)}
+.seg button.on{background:var(--ink);color:var(--onink)}
+input[type=search]{
+  border:1px solid var(--line2);border-radius:6px;background:var(--card);
+  padding:6px 10px;font-family:inherit;font-size:13px;width:180px;color:var(--ink);
+}
+input[type=search]:focus{outline:1px solid var(--blue)}
+.wrap{display:flex;align-items:flex-start;gap:0;max-width:1640px;margin:0 auto}
+aside{
+  width:250px;flex:0 0 250px;height:calc(100vh - 54px);overflow-y:auto;
+  border-right:1px solid var(--line2);padding:0 0 40px;position:sticky;top:54px;
+  background:var(--side);
+}
+aside::-webkit-scrollbar{width:6px}
+aside::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+/* 目录收缩：收起后 aside 让位，露出一条可点击展开的窄轨 */
+.siderail{
+  display:none;width:34px;flex:0 0 34px;height:calc(100vh - 54px);position:sticky;top:54px;
+  border:0;border-right:1px solid var(--line2);background:var(--side);cursor:pointer;
+  font-family:inherit;font-size:12.5px;color:var(--ink3);letter-spacing:3px;padding:14px 0;
+  writing-mode:vertical-rl;
+}
+.siderail:hover{color:var(--blue);background:var(--hover)}
+body.sidecollapse .siderail{display:block}
+body.sidecollapse aside{display:none}
+body.sideoff .siderail{display:none}
+.sidetop{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--side);z-index:2}
+.sidetop .seg{flex:1;min-width:0}
+.sidetop .seg button{flex:1;text-align:center;padding:5px 0}
+.minbtn{
+  flex:0 0 auto;border:1px solid var(--line2);background:transparent;border-radius:4px;
+  font-family:inherit;font-size:12px;line-height:1;color:var(--ink3);cursor:pointer;padding:5px 7px;
+}
+.minbtn:hover{border-color:var(--blue);color:var(--blue)}
+.gitem{display:flex;align-items:center;gap:9px;padding:6px 14px;cursor:pointer;border-left:3px solid transparent;font-size:14px}
+.gitem:hover{background:var(--hover)}
+.gitem.on{background:var(--sel);border-left-color:var(--red)}
+.gnum{font-size:11px;color:var(--ink3);width:20px;text-align:right;flex:0 0 20px}
+.gitem.on .gname{color:var(--red);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;padding:12px 14px}
+.gcell{border:1px solid var(--line);border-radius:5px;background:var(--card);padding:6px 2px 4px;cursor:pointer;text-align:center}
+.gcell:hover{border-color:var(--red);background:var(--hover)}
+.gcell.on{border-color:var(--red);background:var(--sel)}
+.gcell .nm{font-size:12px;margin-top:3px;line-height:1.2}
+.tagsec{padding:4px 14px 12px}
+.tagsec h4{font-size:12px;color:var(--ink3);font-weight:400;padding:10px 0 6px}
+.chip{display:inline-block;border:1px solid var(--line2);border-radius:12px;padding:2px 10px;font-size:12px;margin:3px 4px 3px 0;cursor:pointer;color:var(--ink2)}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+main{flex:1 1 auto;min-width:0;padding:22px 30px 90px;max-width:920px;margin:0 auto}
+
+.tu{display:flex;flex-direction:column;gap:5px}
+.tu .y{height:13px;display:flex;justify-content:space-between}
+.tu .y i{background:var(--ink);height:100%;border-radius:1px}
+.tu .y.yang i{width:100%}
+.tu .y.yin i{width:42%}
+.tu.sm{width:20px}.tu.sm .y{height:3px;gap:0}.tu.sm .y i{background:var(--ink2)}
+.tu.mid{width:34px}.tu.mid .y{height:6px}
+.tu.big{width:76px}.tu.big .y{height:15px}
+.tu .y.mv i{background:var(--red);box-shadow:0 0 0 1.5px var(--red)}
+.tu.click .y{cursor:pointer}
+.tu.click .y:hover i{background:var(--gold)}
+
+.ghead{display:flex;align-items:center;gap:22px;margin-bottom:14px;flex-wrap:wrap}
+.gtitle h1{font-size:30px;font-weight:600;letter-spacing:4px;margin-bottom:2px}
+.gtitle .meta{font-size:12px;color:var(--ink3);letter-spacing:1px}
+.gtitle .full{margin-top:2px}
+.wx{font-weight:600;padding:0 2px}
+.wx-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
+.mvbar{font-size:12px;color:var(--ink3);margin-top:6px}
+
+/* 收藏：星标只用金色的「有/无」两态，不引入第二套语义 */
+/* 权重写成 button.star，压过后面 .cbtns button::before 的 ⧉ */
+.cbtns button.star{margin-left:3px}
+.cbtns button.star::before{content:"☆";font-size:13px;color:var(--line2)}
+.cbtns button.star:hover{border-color:var(--gold);color:var(--gold)}
+.cbtns button.star:hover::before{color:var(--gold)}
+.cbtns button.star.on{border-color:var(--gold);color:var(--gold)}
+.cbtns button.star.on::before{content:"★";color:var(--gold)}
+/* 卦序列表：只标「本卦有 N 条收藏」，不给整卦加星——收藏单位是句子 */
+.gitem .fc{margin-left:auto;font-size:11px;color:var(--gold);flex:0 0 auto;letter-spacing:0}
+.fitem{padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.fitem:hover{background:var(--hover)}
+.fitem .fh{display:flex;align-items:center;gap:6px}
+.fitem .fp{font-size:12px;color:var(--gold);letter-spacing:1px}
+.fitem .fav{margin-left:auto;font-size:13px;color:var(--gold);flex:0 0 auto}
+.fitem .ft{font-size:12px;color:var(--ink3);line-height:1.6;margin-top:3px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.favempty{padding:16px 14px;color:var(--ink3);font-size:13px;line-height:1.9}
+
+/* 进度：序号徽标 + 进度条，数字用等宽避免跳动 */
+.snum{
+  display:inline-flex;align-items:center;justify-content:center;min-width:36px;
+  font-size:11px;color:var(--ink3);border:1px solid var(--line2);border-radius:10px;
+  padding:0 7px;line-height:1.7;cursor:pointer;flex:0 0 auto;
+  font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+.snum:hover{border-color:var(--gold);color:var(--gold)}
+.snum.done{border-color:var(--wx-wood);color:var(--wx-wood);background:var(--sel)}
+.snum.now{border-color:var(--red);color:var(--red);background:var(--sel);font-weight:600}
+/* 进度条：本卦 / 全书两行同一套三列网格，列宽固定，数字等宽右对齐 */
+.prog{display:grid;grid-template-columns:40px 1fr 132px;align-items:center;gap:12px;
+  font-size:12px;color:var(--ink2);width:100%;max-width:560px}
+.prog .pt{letter-spacing:1px}
+.prog .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--gold);border-radius:3px;transition:width .22s}
+.prog .pv{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.prog .pv b{color:var(--ink);font-weight:600}
+.prog .pv.zero{color:var(--ink3)}
+.progbox{display:flex;flex-direction:column;gap:8px;background:var(--side);
+  border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:14px;
+  position:relative}
+.progbox .clr{align-self:flex-start;margin-top:2px}
+.progbox .pt{font-size:12px;color:var(--ink3);letter-spacing:1px;flex:0 0 auto}
+.flowbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--side);
+  border:1px solid var(--gold);border-radius:8px;padding:9px 14px;margin-bottom:14px;font-size:13px;color:var(--ink2)}
+.flowbar .fname{color:var(--gold);font-weight:600;letter-spacing:1px}
+.flowbar .fpos{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+.flowbar button,.progbox button{
+  border:1px solid var(--line2);background:transparent;border-radius:6px;
+  font-family:inherit;font-size:12px;color:var(--ink2);cursor:pointer;padding:3px 10px;
+}
+.flowbar button:hover,.progbox button:hover{border-color:var(--gold);color:var(--gold)}
+.flowbar button:disabled{opacity:.45;cursor:default;border-color:var(--line2);color:var(--ink3)}
+.card.now,.ycard.now{border-color:var(--red);box-shadow:0 0 0 2px var(--sel)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:14px}
+.chead{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px dotted var(--line2);padding-bottom:6px;margin-bottom:10px}
+.chead h3{font-size:12px;color:var(--gold);font-weight:600;letter-spacing:2px}
+.cbtns{display:flex;gap:5px;flex:0 0 auto;align-items:center}
+.cplab{font-size:11px;color:var(--ink3);letter-spacing:1px}
+.cbtns button{
+  border:1px solid var(--line2);background:transparent;border-radius:4px;
+  font-family:inherit;font-size:11px;color:var(--ink2);cursor:pointer;
+  padding:1px 8px 1px 6px;line-height:1.8;display:inline-flex;align-items:center;gap:4px;
+}
+.cbtns button::before{content:"⧉";font-size:12px;color:var(--ink3)}
+.cbtns button:hover{border-color:var(--blue);color:var(--blue);background:var(--hover)}
+.cbtns button:hover::before{color:var(--blue)}
+.cbtns button.done{border-color:var(--red);color:var(--red)}
+.cbtns button.done::before{content:"✓";color:var(--red)}
+.yuan{font-size:17px;line-height:2.05;letter-spacing:.5px}
+.bai{font-size:14px;color:var(--ink2);line-height:1.95;margin-top:10px}
+.bai::before{content:"今譯 ";color:var(--ink3);font-size:11px;letter-spacing:1px}
+.xiao{font-size:13px;color:var(--ink2);margin-top:8px;padding-left:12px;border-left:2px solid var(--line2)}
+.xiao::before{content:"象傳 ";color:var(--ink3);font-size:11px}
+
+.ycard{cursor:default;margin-bottom:10px}
+.ycard:hover{border-color:var(--line2)}
+.ycard.mv{border-color:var(--red);background:var(--sel)}
+.ycard .chead h3{font-size:13px;color:var(--red);letter-spacing:1px;border:1px solid var(--red);border-radius:4px;padding:0 8px;line-height:1.55}
+.zi{margin-top:9px;padding-top:8px;border-top:1px dotted var(--line2);display:flex;flex-direction:column;gap:5px}
+.zi .z{font-size:13px;color:var(--ink2);line-height:1.8}
+.zi .z b{font-weight:600;font-size:12px;margin-right:6px;border:1px solid;border-radius:3px;padding:0 5px}
+.zi .z.t-earth b{color:var(--wx-earth);border-color:var(--wx-earth)}
+.zi .z.t-water b{color:var(--wx-water);border-color:var(--wx-water)}
+.zi .z.t-fire  b{color:var(--wx-fire);border-color:var(--wx-fire)}
+.zi .z.t-wood  b{color:var(--wx-wood);border-color:var(--wx-wood)}
+.zi .z.t-metal b{color:var(--wx-metal);border-color:var(--wx-metal)}
+
+.kw{border-bottom:1px dotted var(--ink3);cursor:help;border-radius:2px;transition:background .12s}
+.kw:hover{background:var(--hover)}
+.kw.on{background:var(--sel);border-bottom-color:var(--red)}
+#tip{
+  position:fixed;z-index:60;max-width:290px;background:var(--card);border:1px solid var(--line2);
+  border-radius:7px;padding:10px 13px;box-shadow:0 6px 20px var(--shadow);
+  font-size:13px;line-height:1.75;color:var(--ink2);display:none;
+}
+#tip .tk{font-size:15px;color:var(--ink);font-weight:600;margin-right:8px}
+#tip .tt{font-size:11px;color:var(--ink3);letter-spacing:1px;margin-bottom:4px}
+
+.tui{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
+.tuifoot{font-size:11.5px;color:var(--ink3);line-height:1.85;margin-bottom:12px}
+.tuifoot b{color:var(--ink2);font-weight:600}
+.tcard .tt{position:relative}
+.tcard .tal{display:block;font-size:11px;color:var(--ink3);font-weight:400;letter-spacing:0;margin-top:2px}
+.xsbox{border:1px solid var(--line2);border-radius:8px;background:var(--side);margin-bottom:14px}
+.xsbox>summary{cursor:pointer;list-style:none;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink)}
+.xsbox>summary::-webkit-details-marker{display:none}
+.xsbox>summary::before{content:"▸ ";color:var(--ink3)}
+.xsbox[open]>summary::before{content:"▾ ";color:var(--ink3)}
+.xsbox>summary .xstag{margin-left:8px;font-size:11px;font-weight:400;color:var(--ink3);
+  border:1px solid var(--line2);border-radius:3px;padding:1px 6px}
+.xsbd{padding:0 14px 12px}
+.xsh{font-size:11.5px;letter-spacing:1px;color:var(--ink3);margin:10px 0 5px;
+  border-bottom:1px dotted var(--line2);padding-bottom:4px}
+.xsrow{display:flex;gap:10px;font-size:12.5px;line-height:1.85;padding:2px 0}
+.xsrow b{flex:0 0 62px;color:var(--ink);font-weight:600}
+.xsrow span{color:var(--ink2);min-width:0}
+.xsrow i{display:block;font-style:normal;color:var(--ink3);font-size:11.5px}
+.xst{width:100%;border-collapse:collapse;font-size:12px;margin-top:2px}
+.xst th,.xst td{border:1px solid var(--line);padding:4px 7px;text-align:left}
+.xst th{background:var(--sel);color:var(--ink3);font-weight:600;font-size:11.5px}
+.xst td{color:var(--ink2)}
+.xsfoot{font-size:11.5px;color:var(--ink3);line-height:1.9;margin-top:10px;
+  border-top:1px dotted var(--line2);padding-top:8px}
+/* ---- 史層：統一的卡片模板，三類內容只在徽標上分家 ---- */
+.shcls-d{font-weight:400;color:var(--ink3);font-size:11px;letter-spacing:0}
+.shblk{border:1px solid var(--line);border-radius:6px;background:var(--card);
+  padding:9px 12px;margin:7px 0 11px}
+.shqt{font-size:15px;color:var(--ink);line-height:1.85;padding-bottom:6px;
+  border-bottom:1px dotted var(--line2);margin-bottom:6px}
+.shsrc{margin-top:7px}
+.shsrc1{display:flex;gap:8px;padding:6px 0;border-top:1px dotted var(--line2)}
+.shsrc-b{flex:0 0 32px;height:19px;line-height:19px;text-align:center;font-size:11px;
+  border-radius:3px;font-weight:600;letter-spacing:1px}
+.shsrc-b.k-jing {color:var(--red);  background:color-mix(in srgb, var(--red) 10%, transparent)}
+.shsrc-b.k-chuan{color:var(--blue); background:color-mix(in srgb, var(--blue) 10%, transparent)}
+.shsrc-b.k-chu  {color:var(--wx-earth);background:color-mix(in srgb, var(--wx-earth) 14%, transparent)}
+.shsrc-t{flex:1;min-width:0;font-size:13px}
+.shsrc-t b{display:block;font-size:11.5px;color:var(--ink3);font-weight:600;margin-bottom:2px}
+.shsrc-t .yuan{font-size:13.5px;line-height:1.8;color:var(--ink)}
+.shsrc-t .bai{font-size:12.5px;line-height:1.75;color:var(--ink2)}
+.shcf{display:inline-block;font-size:11px;padding:0 6px;border-radius:3px;
+  margin-right:6px;font-weight:600;vertical-align:1px}
+.shcf.k-high{color:var(--wx-wood);background:color-mix(in srgb, var(--wx-wood) 12%, transparent)}
+.shcf.k-mid {color:var(--wx-earth);background:color-mix(in srgb, var(--wx-earth) 14%, transparent)}
+.shcf.k-low {color:var(--red);background:color-mix(in srgb, var(--red) 10%, transparent)}
+.shtxt{color:var(--ink2)}
+/* 側欄「史」：按時代分段的時間軸 */
+.shtl{padding:4px 2px 20px}
+.shtl-h{font-size:13px;font-weight:600;color:var(--ink);letter-spacing:1px}
+.shtl-n{font-size:11.5px;color:var(--ink3);margin:2px 0 10px}
+.shera{margin-bottom:14px;border-left:2px solid var(--line2);padding-left:10px}
+.shera-t{display:flex;align-items:baseline;gap:8px}
+.shera-t b{font-size:12.5px;color:var(--ink)}
+.shera-t span{font-size:11px;color:var(--ink3)}
+.shera-n{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-bottom:6px}
+.shiitem{border:1px solid var(--line);border-radius:6px;background:var(--card);
+  padding:7px 9px;margin-bottom:6px;cursor:pointer}
+.shiitem:hover{border-color:var(--blue)}
+.shiitem.on{border-color:var(--blue);background:var(--sel)}
+.shii-h{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.shcls{font-size:11px;font-weight:600;padding:0 6px;border-radius:3px;letter-spacing:1px;
+  color:var(--blue);background:color-mix(in srgb, var(--blue) 10%, transparent)}
+.shcls.k-jing{color:var(--red);background:color-mix(in srgb, var(--red) 10%, transparent)}
+.shcls.k-yong{color:var(--wx-wood);background:color-mix(in srgb, var(--wx-wood) 12%, transparent)}
+.shii-g{font-size:13px;font-weight:600;color:var(--ink)}
+.shii-t{font-size:13px;color:var(--ink2);line-height:1.7}
+.shii-d{font-size:11.5px;color:var(--ink3);line-height:1.7;margin-top:2px}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:center;cursor:pointer}
+.tcard:hover{border-color:var(--blue)}
+.tcard .tt{font-size:11px;color:var(--ink3);letter-spacing:1px;margin-bottom:8px}
+.tcard .tu{margin:0 auto 7px}
+.tcard .tn{font-size:14px;font-weight:600}
+.tcard .td{font-size:11px;color:var(--ink3);line-height:1.5;margin-top:3px}
+.pend{color:var(--ink3);font-size:13px;padding:8px 0;border-top:1px dotted var(--line2);margin-top:10px}
+.guanlian{font-size:13px;color:var(--ink2);line-height:1.9}
+.guanlian b{color:var(--gold)}
+.note{font-size:12px;color:var(--ink3);line-height:1.8;padding:10px 0;border-top:1px solid var(--line2);margin-top:20px}
+/* 义理层：〔傳〕〔解〕〔用〕〔資〕 四层开关与面板 */
+.layers{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.lchip{
+  font-size:12px;border:1px solid var(--line2);border-radius:5px;padding:2px 9px;
+  color:var(--ink3);cursor:pointer;white-space:nowrap;
+}
+.lchip:hover{border-color:var(--gold);color:var(--gold)}
+.lchip.on{background:var(--sel);border-color:var(--gold);color:var(--gold);font-weight:600}
+.school{font-size:13px;line-height:1.9;color:var(--ink2);padding:7px 0;border-top:1px dotted var(--line2)}
+.school b{color:var(--gold);margin-right:8px;font-weight:600}
+.disclaim{font-size:11px;color:var(--ink3);line-height:1.75;margin-top:8px;border-top:1px dotted var(--line2);padding-top:7px}
+.gentag{font-size:11px;color:var(--ink3);border:1px solid var(--line2);border-radius:4px;padding:1px 7px}
+.cjgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
+.cjgrid>div{background:var(--side);border:1px solid var(--line);border-radius:7px;padding:10px 13px}
+.cjgrid h4{font-size:12px;color:var(--gold);margin:0 0 5px;letter-spacing:1px;font-weight:600}
+.cjgrid>div>span{font-size:13px;color:var(--ink2);line-height:1.8}
+.hj{padding:10px 0;border-top:1px dotted var(--line2)}
+.hjsrc{font-size:11px;color:var(--blue);border:1px solid var(--line2);border-radius:4px;padding:1px 7px;margin-right:6px}
+.hjlink{margin-top:6px}
+.hjall{font-size:11px;color:var(--ink3)}
+@media(max-width:900px){ .cjgrid{grid-template-columns:1fr} }
+/* 用法条：把可交互的东西一次说清，别让人猜 */
+.usebar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;
+  background:var(--side);border:1px solid var(--line);border-radius:8px;
+  padding:9px 14px;margin-bottom:14px;font-size:12px;color:var(--ink2);line-height:1.75;
+}
+.usebar .u{white-space:nowrap}
+.usebar b{color:var(--ink);font-weight:600}
+.usebar .cp{color:var(--blue)}
+.legend{font-size:12px;color:var(--ink3);line-height:2;margin-top:10px;border-top:1px dotted var(--line2);padding-top:8px}
+.legend span{margin-right:14px;white-space:nowrap}
+
+#toast{
+  position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(8px);
+  background:var(--ink);color:var(--onink);font-size:13px;padding:8px 18px;border-radius:20px;
+  opacity:0;pointer-events:none;transition:.18s;z-index:70;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:1080px){
+  #ai{display:none}
+  body.aiforce #ai{display:flex;position:fixed;right:0;top:54px;bottom:0;z-index:69;
+    box-shadow:-8px 0 24px var(--shadow)}
+}
+@media(max-width:900px){
+  aside{display:none}
+  body.sidecollapse .siderail{display:none}
+  main{padding:16px}
+  .tui{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ---- 句子内嵌层：〔解〕〔用〕〔資〕各自成框，折叠在该句卡片里 ---- */
+.subbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px dotted var(--line2)}
+.sb{border:1px solid var(--line2);border-radius:12px;background:transparent;font-family:inherit;
+  font-size:11.5px;color:var(--ink3);cursor:pointer;padding:2px 10px;line-height:1.8}
+.sb:hover{border-color:var(--blue);color:var(--blue)}
+.sb.on{border-color:var(--blue);color:var(--blue);background:var(--sel);font-weight:600}
+.subbox{margin-top:8px;border:1px solid var(--line2);border-left:2px solid var(--blue);
+  border-radius:0 7px 7px 0;background:var(--sel);padding:10px 13px}
+.subbox + .subbox{margin-top:6px}
+.subbox h5{margin:0 0 8px;font-size:12.5px;letter-spacing:1px;display:flex;align-items:center;gap:7px}
+.srow{display:flex;gap:10px;font-size:13px;line-height:1.95;padding:4px 0;border-top:1px dotted var(--line2)}
+.srow:first-of-type{border-top:0}
+.srow b{flex:0 0 66px;font-weight:600;color:var(--ink2);font-size:12.5px}
+.srow span{flex:1}
+.subdis{font-size:11.5px;color:var(--ink3);margin-top:8px;padding-top:6px;border-top:1px dotted var(--line2);line-height:1.85}
+.subbox .hj{padding:7px 0;border-bottom:1px dotted var(--line2)}
+.subbox .hj:last-of-type{border-bottom:0}
+.lsp{font-size:11.5px;color:var(--ink3)}
+.lmini{border:1px solid var(--line2);background:transparent;border-radius:4px;font-family:inherit;
+  font-size:11px;color:var(--ink3);cursor:pointer;padding:1px 8px}
+.lmini:hover{border-color:var(--blue);color:var(--blue)}
+
+/* ---- 顶栏形状开关：目录 / 助手，默认都展开 ---- */
+.tbtn{
+  border:1px solid var(--line2);border-radius:6px;background:transparent;font-family:inherit;
+  font-size:13px;color:var(--ink2);cursor:pointer;padding:5px 11px;white-space:nowrap;
+}
+.tbtn:hover{background:var(--hover)}
+.tbtn.on{background:var(--ink);color:var(--onink)}
+body.sideoff aside{display:none}
+body.aioff #ai{display:none}
+
+/* ---- 右侧小助手：常驻右栏，不是悬浮按钮 ---- */
+#ai{
+  width:344px;flex:0 0 344px;height:calc(100vh - 54px);
+  position:sticky;top:54px;z-index:20;background:var(--side);
+  border-left:1px solid var(--line2);display:flex;flex-direction:column;
+}
+@media(max-width:1280px){#ai{width:302px;flex-basis:302px}}
+.aihead{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;
+  border-bottom:1px solid var(--line2);flex:0 0 auto}
+.aihead b{font-size:13.5px;letter-spacing:1px}
+.aihead .st{font-size:11px;color:var(--ink3);margin-left:7px;font-weight:400;letter-spacing:0}
+.aihead button{border:1px solid var(--line2);background:transparent;border-radius:4px;font-family:inherit;
+  font-size:11.5px;color:var(--ink3);cursor:pointer;padding:2px 9px;margin-left:5px}
+.aihead button:hover{border-color:var(--blue);color:var(--blue)}
+/* 模型设置：常驻可见的一节，不是藏在按钮后面 */
+.aiset{flex:0 0 auto;border-top:1px solid var(--line2);background:var(--card);padding:8px 13px 11px}
+.aiset summary{
+  font-size:12px;letter-spacing:1px;color:var(--ink2);cursor:pointer;list-style:none;
+  display:flex;align-items:center;gap:6px;
+}
+.aiset summary::-webkit-details-marker{display:none}
+.aiset summary::before{content:"▸";font-size:10px;color:var(--ink3)}
+.aiset[open] summary::before{content:"▾"}
+.aiset label{display:block;font-size:11.5px;color:var(--ink3);margin:8px 0 3px}
+.aiset input{
+  width:100%;border:1px solid var(--line2);border-radius:6px;background:var(--paper);
+  color:var(--ink);font-family:inherit;font-size:12.5px;padding:5px 9px;
+}
+.aiset input:focus{outline:none;border-color:var(--blue)}
+.aiset .arow{display:flex;gap:6px;margin-top:9px}
+.aiset .arow button{
+  flex:1;border:1px solid var(--line2);background:transparent;border-radius:6px;
+  font-family:inherit;font-size:12.5px;color:var(--ink2);cursor:pointer;padding:5px 0;
+}
+.aiset .arow button:hover{border-color:var(--blue);color:var(--blue)}
+.aiset .ahint{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:8px}
+/* 后台问题反馈记录 */
+.buglist{max-height:190px;overflow-y:auto;margin-top:9px;border-top:1px dotted var(--line2);padding-top:7px}
+.bugitem{display:grid;grid-template-columns:34px auto;gap:2px 8px;font-size:11.5px;line-height:1.7;
+  padding:6px 0;border-top:1px dotted var(--line2)}
+.bugitem:first-child{border-top:0}
+.bugitem .bi{color:var(--gold);font-weight:600}
+.bugitem .bf{color:var(--blue)}
+.bugitem .bq{grid-column:2;color:var(--ink2);word-break:break-all}
+.bugitem .bt{grid-column:2;color:var(--ink3);font-size:11px}
+#aibody{flex:1 1 auto;overflow-y:auto;padding:12px 13px}
+#aipreset{flex:0 0 auto;padding:0 13px 8px;display:flex;gap:5px;flex-wrap:wrap}
+.pchip{border:1px solid var(--line2);border-radius:12px;font-size:11.5px;color:var(--ink3);
+  cursor:pointer;padding:2px 10px;line-height:1.9}
+.pchip:hover{border-color:var(--blue);color:var(--blue)}
+.aiinp{flex:0 0 auto;display:flex;gap:6px;padding:10px 13px 13px;border-top:1px solid var(--line2)}
+.aiinp input{flex:1;min-width:0;border:1px solid var(--line2);border-radius:6px;background:var(--card);
+  color:var(--ink);font-family:inherit;font-size:13px;padding:6px 10px}
+.aiinp input:focus{outline:none;border-color:var(--blue)}
+.aiinp button{border:1px solid var(--line2);background:transparent;border-radius:6px;font-family:inherit;
+  font-size:13px;color:var(--ink2);cursor:pointer;padding:6px 14px}
+.aiinp button:hover{border-color:var(--blue);color:var(--blue)}
+.msg{margin-bottom:12px}
+.msg.q{text-align:right}
+.msg.q::before{content:"";display:inline-block}
+.msg .mq{display:inline-block;max-width:88%;background:var(--sel);border:1px solid var(--line2);
+  border-radius:10px;padding:7px 11px;font-size:13px;line-height:1.8;text-align:left}
+.mtitle{font-size:12px;letter-spacing:1px;color:var(--ink2);margin-bottom:6px}
+.mp{font-size:13px;line-height:1.95;margin-bottom:6px}
+.mul{margin:0 0 6px;padding-left:18px;font-size:13px;line-height:1.95}
+.mkv{margin-bottom:6px}
+.mkv div{display:flex;gap:9px;font-size:13px;line-height:1.9}
+.mkv b{flex:0 0 58px;font-weight:600;color:var(--ink2);font-size:12.5px}
+.mquote{border-left:2px solid var(--line2);padding:5px 0 5px 10px;font-size:13px;line-height:1.9;
+  color:var(--ink);margin-bottom:8px}
+.mgo{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.mgo .chip{cursor:pointer}
+/* 〔境〕处境检索 */
+.situsec{padding:6px 14px 16px}
+.situtip{font-size:11.5px;color:var(--ink3);line-height:1.9;padding:2px 0 10px;border-bottom:1px dotted var(--line2);margin-bottom:6px}
+.situcard{border-bottom:1px dotted var(--line2)}
+.situcard summary{cursor:pointer;padding:9px 0 8px;list-style:none;display:block}
+.situcard summary::-webkit-details-marker{display:none}
+.situcard summary b{font-size:13px;color:var(--ink);font-weight:600}
+.situcard summary b::before{content:'\25B8 ';color:var(--ink3);font-size:10px}
+.situcard[open] summary b::before{content:'\25BE ';color:var(--red)}
+.situask{display:block;font-size:11.5px;color:var(--ink3);line-height:1.75;margin-top:2px}
+.situbody{padding:0 0 10px}
+.siturow{border-left:2px solid var(--line2);padding:6px 0 7px 10px;margin-bottom:7px;cursor:pointer}
+.siturow:hover{border-left-color:var(--red)}
+.situnm{font-size:13px;color:var(--ink);font-weight:600}
+.situy{font-size:10.5px;color:var(--red);border:1px solid var(--line2);border-radius:10px;padding:0 6px;margin-left:6px;font-weight:400}
+.situwhy{font-size:12px;color:var(--ink2);line-height:1.85;margin-top:3px}
+.situcj{font-size:11.5px;color:var(--ink2);line-height:1.8;margin-top:4px}
+.situok{font-size:11.5px;color:var(--ink3);line-height:1.8;margin-top:2px}
+.situcj .k,.situok .k{display:inline-block;color:var(--ink3);font-size:10px;border:1px solid var(--line2);border-radius:8px;padding:0 5px;margin-right:5px}
+.situok .k.ok,.situok .k.no{margin-left:8px}
+.ycard.hit{box-shadow:0 0 0 2px var(--red) inset;border-radius:4px}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">读易<small id="sub">周易精读</small></div>
+  <input type="search" id="q" placeholder="搜索卦名 / 卦辞 / 标签">
+  <div class="seg" id="scriptSeg">
+    <button data-s="simp" class="on">简体</button>
+    <button data-s="trad">繁体</button>
+  </div>
+  <div class="seg" id="ziSeg">
+    <button data-z="1" class="on">字注 开</button>
+    <button data-z="0">字注 关</button>
+  </div>
+  <div class="seg" id="modeSeg">
+    <button data-m="both" class="on">文白对照</button>
+    <button data-m="yuan">仅原文</button>
+    <button data-m="bai">仅今译</button>
+  </div>
+  <div class="seg" id="themeSeg">
+    <button data-t="day" class="on">☀ 日间</button>
+    <button data-t="night">☾ 夜间</button>
+  </div>
+  <button class="tbtn on" id="sideTog" title="显示或隐藏左侧目录">☰ 目录</button>
+  <button class="tbtn on" id="aiTog" title="显示或隐藏右侧小助手">助手</button>
+</header>
+
+<div class="wrap">
+  <button class="siderail" id="sideRail" title="展开目录">目录 ›</button>
+  <aside id="side"></aside>
+  <main id="main"></main>
+  <div id="ai">
+    <div class="aihead">
+      <b id="aititle">问小助手<span class="st" id="aistat">离线 · 读本站数据</span></b>
+      <span><button id="aiclear" title="清空对话">清空</button></span>
+    </div>
+    <div id="aibody"></div>
+    <div id="aipreset"></div>
+    <div class="aiinp"><input id="aiq" placeholder="问一句：坎卦怎么用？" /><button id="aisend">问</button></div>
+    <details class="aiset" id="aiset">
+      <summary>模型设置（可选）</summary>
+      <label for="aiEp">接口地址（兼容 OpenAI 格式，留空即用离线引擎）</label>
+      <input id="aiEp" placeholder="https://…/v1/chat/completions" autocomplete="off">
+      <label for="aiKey">API Key</label>
+      <input id="aiKey" type="password" placeholder="sk-…" autocomplete="off">
+      <label for="aiModel">模型名</label>
+      <input id="aiModel" placeholder="gpt-4o-mini" autocomplete="off">
+      <div class="arow"><button id="aiSave">保存</button><button id="aiReset">恢复离线</button></div>
+      <div class="ahint" id="aihint">离线引擎默认开启：所有回答由本站六十四卦数据当场算出，不联网、不编造，也不做占卜预测。填入接口后改走远程模型。</div>
+    </details>
+    <details class="aiset" id="aibugs">
+      <summary>问题反馈记录（<span id="bugn">0</span>）</summary>
+      <label for="bugEp">上报地址（可选，填了才会自动 POST 每一条）</label>
+      <input id="bugEp" placeholder="https://…/bug" autocomplete="off">
+      <div class="arow">
+        <button id="bugSave">保存地址</button>
+        <button id="bugExport">导出 JSON</button>
+        <button id="bugClear">清空记录</button>
+      </div>
+      <div id="buglist" class="buglist"></div>
+      <div class="ahint">用户提到「本该能用却没实现」的功能点时，会先记进这里（本地保存，刷新不丢），并即时回复「后台正在修理bug中」。填了上报地址后，每条还会同步 POST 出去。</div>
+    </details>
+  </div>
+</div>
+<div id="tip"></div>
+<div id="toast"></div>
+
+<script src="han.js"></script>
+<script src="gloss.js"></script>
+<script src="data.js"></script>
+<script src="layer.js"></script>
+<script src="sub.js"></script>
+<script src="xs.js"></script>
+<script src="shi.js"></script>
+<script src="qa.js"></script>
+<script src="yao_p1.js"></script>
+<script src="yao_p2.js"></script>
+<script src="yao_p3.js"></script>
+<script src="yao_p4.js"></script>
+<script src="yao_p5.js"></script>
+<script src="yao_p6.js"></script>
+<script src="situation.js"></script>
+<script>
+/* 八卦取象（说卦传节要，公有领域） */
+const XIANG_TRI = {
+  '乾':'乾為天、為圜、為君、為父、為玉、為金、為寒、為冰、為大赤、為良馬、為木果。',
+  '坤':'坤為地、為母、為布、為釜、為吝嗇、為均、為子母牛、為大輿、為文、為眾、為柄。',
+  '震':'震為雷、為龍、為玄黃、為旉、為大塗、為長子、為決躁、為蒼筤竹、為萑葦。',
+  '巽':'巽為木、為風、為長女、為繩直、為工、為白、為長、為高、為進退、為不果、為臭。',
+  '坎':'坎為水、為溝瀆、為隱伏、為矯輮、為弓輪、為血卦、為赤、為心病、為耳痛。',
+  '離':'離為火、為日、為電、為中女、為甲冑、為戈兵、為大腹、為乾卦、為鱉、為蟹、為蚌、為龜。',
+  '艮':'艮為山、為徑路、為小石、為門闕、為果蓏、為閽寺、為指、為狗、為鼠。',
+  '兌':'兌為澤、為少女、為巫、為口舌、為毀折、為附決、為剛鹵、為妾、為羊。'
+};
+
+/* 八卦五行：给卦象线条与卦名做信息编码，不是装饰 */
+const WUXING = {'乾':'金','兌':'金','離':'火','震':'木','巽':'木','坎':'水','艮':'土','坤':'土'};
+const WX_VAR = {'木':'--wx-wood','火':'--wx-fire','土':'--wx-earth','金':'--wx-metal','水':'--wx-water'};
+function wxColor(e){ return 'var(' + (WX_VAR[e] || '--wx-metal') + ')'; }
+
+/* 注释四类 → 五行色（字形切换后仍要命中，故用映射而非中文类名） */
+const ZTONE = {
+  '字義':'earth','象數':'water','義理':'fire','筮例':'wood','史':'metal',
+  '字义':'earth','象数':'water','义理':'fire','筮例':'wood'
+};
+
+const G = GUA.map(function(a){
+  return {n:a[0],name:a[1],full:a[2],down:a[3],up:a[4],
+          ci:a[5],ciM:a[6],xiang:a[7],xiangM:a[8],tags:a[9].split(',')};
+});
+function linesOf(g){ return TRIGRAM[g.down] + TRIGRAM[g.up]; }
+const BY_LINES = {};
+G.forEach(function(g){ BY_LINES[linesOf(g)] = g; });
+function guaByLines(l){ return BY_LINES[l] || null; }
+
+let cur = 1, mode = 'both', view = 'list', moving = [false,false,false,false,false,false];
+let filterTag = null, ziOn = true, xsOpen = false, shiOpen = false, theme = 'day';
+try {
+  const s = localStorage.getItem('zy.script'); if (s) SCRIPT = s;
+  const z = localStorage.getItem('zy.zi');     if (z !== null) ziOn = z === '1';
+  const th = localStorage.getItem('zy.theme'); if (th) theme = th;
+} catch(e){}
+function applyTheme(){
+  document.body.setAttribute('data-theme', theme);
+  document.querySelectorAll('#themeSeg button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.t === theme);
+  });
+}
+
+/* ---------------- 收藏 ----------------
+   收藏单位是「句子」不是「卦」：key = 卦号 + ':' + ci|xiang|y0..y5
+   每条卦辞、大象传、每一爻各自独立收藏 */
+let fav = [];
+try {
+  const f = localStorage.getItem('zy.fav');
+  if (f) fav = JSON.parse(f).map(function(x){
+    /* 兼容早期「整卦收藏」的旧数据：卦号 → 该卦卦辞 */
+    return typeof x === 'number' ? x + ':ci' : x;
+  }).filter(function(x){ return typeof x === 'string'; });
+} catch(e){}
+function saveFav(){ try { localStorage.setItem('zy.fav', JSON.stringify(fav)); } catch(e){} }
+function isFav(k){ return fav.indexOf(k) >= 0; }
+function toggleFav(k){
+  const i = fav.indexOf(k);
+  if (i >= 0) fav.splice(i, 1); else fav.push(k);
+  saveFav(); renderSide(); renderMain();
+}
+function favCount(){ return fav.length; }
+function favOfGua(n){ return fav.filter(function(k){ return k.split(':')[0] === String(n); }).length; }
+
+/* ---------------- 进度 ----------------
+   句子 = 卦辞 / 大象传 / 每一爻，各自计一句。
+   两层进度：① 卦内 i/N  ② 主题流 i/N（按标签把句子串成一条阅读流） */
+let read = new Set();
+try {
+  const r = localStorage.getItem('zy.read');
+  if (r) JSON.parse(r).forEach(function(k){ if (typeof k === 'string') read.add(k); });
+} catch(e){}
+function saveRead(){ try { localStorage.setItem('zy.read', JSON.stringify([...read])); } catch(e){} }
+function isRead(k){ return read.has(k); }
+function toggleRead(k){
+  if (read.has(k)) read.delete(k); else read.add(k);
+  saveRead(); renderSide(); renderMain();
+}
+let curPos = null;
+try { curPos = localStorage.getItem('zy.pos'); } catch(e){}
+function setPos(k){ curPos = k; try { localStorage.setItem('zy.pos', k); } catch(e){} }
+
+let flowTag = null, flowIdx = 0, pendingScroll = false;
+
+/* 一卦的全部句子 */
+function sentencesOf(g){
+  const out = [];
+  out.push({k:g.n + ':ci',    label:HM('卦辞'),   y:HJ(g.ci),    m:HM(g.ciM)});
+  out.push({k:g.n + ':xiang', label:HM('大象传'), y:HJ(g.xiang), m:HM(g.xiangM)});
+  (YAO[g.n] || []).forEach(function(y, i){
+    out.push({k:g.n + ':y' + i, label:HJ(y.t), y:HJ(y.c), m:HM(y.m)});
+  });
+  const xu = XUGUA[g.n];
+  if (xu) out.push({k:g.n + ':xu', label:HM('序卦传'), y:HJ(xu[0]), m:HM(xu[1])});
+  const za = ZAGUA[g.n];
+  if (za) out.push({k:g.n + ':za', label:HM('杂卦传'), y:HJ(za[0]), m:HM(za[1])});
+  (WENYAN[g.n] || []).forEach(function(w, j){
+    out.push({k:g.n + ':wy' + j, label:HM('文言'), y:HJ(w[0]), m:HM(w[1])});
+  });
+  return out;
+}
+/* 全书句子总数（已收录的部分） */
+function totalSentences(){
+  let n = 0;
+  G.forEach(function(g){ n += sentencesOf(g).length; });
+  return n;
+}
+/* 某个主题（标签）下的句子流 */
+function flowOf(tag){
+  const out = [];
+  G.forEach(function(g){
+    if (g.tags.indexOf(tag) < 0) return;
+    sentencesOf(g).forEach(function(s){ out.push(Object.assign({g:g, n:g.n}, s)); });
+  });
+  return out;
+}
+function readTotal(){ return [...read].filter(function(k){ return !!parseKey(k); }).length; }
+function parseKey(k){
+  if (typeof k !== 'string') return null;
+  const p = k.split(':'), n = +p[0], g = gua(n);
+  if (!g) return null;
+  const pp = p[1];
+  if (pp === 'ci' || pp === 'xiang' || pp === 'xu' || pp === 'za') return {n:n, g:g};
+  if (/^wy\d+$/.test(pp)) return {n:n, g:g};
+  const m = /^y(\d+)$/.exec(pp);
+  if (m && YAO[n] && YAO[n][+m[1]]) return {n:n, g:g};
+  return null;
+}
+/* 进度条：两条同构。已读 0 时只写「未开始」，不出现 0/N */
+function progHTML(done, total, label){
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const pv = done
+    ? '<b>' + pct + '%</b> ' + HM('已读') + ' ' + done + ' / ' + total
+    : '<span class="zero">' + HM('未开始') + '</span>';
+  return '<span class="prog"><span class="pt">' + label + '</span>'
+    + '<span class="bar"><i style="width:' + pct + '%"></i></span>'
+    + '<span class="pv' + (done ? '' : ' zero') + '">' + pv + '</span></span>';
+}
+/* 句子序号徽标：显示 i/N，点击切换「已读」并设为当前位置 */
+function snumHTML(k, i, total){
+  const cls = 'snum' + (isRead(k) ? ' done' : '') + (curPos === k ? ' now' : '');
+  return '<span class="' + cls + '" data-rd="' + k + '" title="'
+       + HM(isRead(k) ? '已读，点击取消' : '标记为已读，并定位到这里') + '">'
+       + (i + 1) + '/' + total + '</span>';
+}
+function favItem(k){
+  const p = k.split(':'), n = +p[0], g = gua(n);
+  if (!g) return null;
+  if (p[1] === 'ci')    return {k:k, n:n, part:HM('卦辞'),   text:HJ(g.ci),    bai:HM(g.ciM)};
+  if (p[1] === 'xiang') return {k:k, n:n, part:HM('大象传'), text:HJ(g.xiang), bai:HM(g.xiangM)};
+  if (p[1] === 'xu') { const a = XUGUA[n]; return a ? {k:k, n:n, part:HM('序卦传'), text:HJ(a[0]), bai:HM(a[1])} : null; }
+  if (p[1] === 'za') { const b = ZAGUA[n]; return b ? {k:k, n:n, part:HM('杂卦传'), text:HJ(b[0]), bai:HM(b[1])} : null; }
+  const wm = /^wy(\d+)$/.exec(p[1]);
+  if (wm) { const c = WENYAN[n] && WENYAN[n][+wm[1]]; return c ? {k:k, n:n, part:HM('文言'), text:HJ(c[0]), bai:HM(c[1])} : null; }
+  const i = +String(p[1]).slice(1), y = YAO[n] && YAO[n][i];
+  if (!y) return null;
+  return {k:k, n:n, part:HJ(y.t), text:HJ(y.c), bai:HM(y.m)};
+}
+function starHTML(k){
+  return '<button class="fav star' + (isFav(k) ? ' on' : '') + '" data-fav="' + k + '" title="'
+       + HM(isFav(k) ? '取消收藏这一句' : '收藏这一句') + '"></button>';
+}
+
+function gua(n){ return G[n - 1]; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* 逐字注：先经 HJ 转字形，再最长匹配加虚线下划线 */
+function annotate(text){
+  const t = HJ(text);
+  if (!ziOn || !GLOSS_RE) return esc(t);
+  return esc(t).replace(GLOSS_RE, function(m){
+    return '<span class="kw" data-k="' + esc(m) + '">' + m + '</span>';
+  });
+}
+
+/* 卦象：下三爻用下卦五行色，上三爻用上卦五行色 */
+function tuHTML(lines, cls, mv, clickable, wx){
+  const s = lines.split('').reverse(), m = mv || [];
+  let h = '<div class="tu ' + cls + (clickable ? ' click' : '') + '">';
+  for (let i = 0; i < 6; i++) {
+    const idx = 5 - i;
+    const yang = s[i] === '1';
+    const st = wx ? ' style="background:' + wxColor(idx < 3 ? wx[0] : wx[1]) + '"' : '';
+    h += '<div class="y ' + (yang ? 'yang' : 'yin') + (m[idx] ? ' mv' : '') + '"'
+       + (clickable ? ' data-yao="' + idx + '"' : '') + '>'
+       + (yang ? '<i' + st + '></i>' : '<i' + st + '></i><i' + st + '></i>') + '</div>';
+  }
+  return h + '</div>';
+}
+function wxOf(g){ return [WUXING[g.down], WUXING[g.up]]; }
+function resetMv(){ moving = [false,false,false,false,false,false]; }
+
+/* ---------------- 侧栏 ---------------- */
+function gitemHTML(g){
+  const c = favOfGua(g.n);
+  return '<div class="gitem' + (g.n===cur?' on':'') + '" data-n="' + g.n + '">'
+     + '<span class="gnum">' + g.n + '</span>'
+     + tuHTML(linesOf(g), 'sm', null, false, wxOf(g))
+     + '<span class="gname">' + HJ(g.name) + '</span>'
+     + (c ? '<span class="fc" title="' + HM('本卦已收藏') + ' ' + c + ' ' + HM('句') + '">★' + c + '</span>' : '')
+     + '</div>';
+}
+function sideTopHTML(seg){
+  return '<div class="sidetop">' + (seg || '<div class="seg"></div>')
+    + '<button class="minbtn" data-min="1" title="'
+    + HM('把目录收成一条窄轨，点窄轨可再展开') + '">«</button></div>';
+}
+function renderSide(){
+  const el = document.getElementById('side');
+  const top = sideTopHTML('<div class="seg" id="viewSeg">'
+    + '<button data-v="sit"' + (view==='sit'?' class="on"':'') + '>' + HM('处境') + '</button>'
+    + '<button data-v="list"' + (view==='list'?' class="on"':'') + '>' + HM('卦序') + '</button>'
+    + '<button data-v="grid"' + (view==='grid'?' class="on"':'') + '>' + HM('卦阵') + '</button>'
+    + '<button data-v="tag"'  + (view==='tag' ?' class="on"':'') + '>' + HM('主题') + '</button>'
+    + '<button data-v="shi"'  + (view==='shi' ?' class="on"':'') + '>' + HM('史') + '</button>'
+    + '<button data-v="fav"'  + (view==='fav' ?' class="on"':'') + '>★ ' + (favCount() || '') + '</button>'
+    + '</div>');
+  let body = '';
+  if (view === 'grid') {
+    body = '<div class="grid">';
+    G.forEach(function(g){
+      body += '<div class="gcell' + (g.n===cur?' on':'') + '" data-n="' + g.n + '">'
+         + tuHTML(linesOf(g), 'sm', null, false, wxOf(g))
+         + '<div class="nm">' + HJ(g.name) + '</div></div>';
+    });
+    body += '</div>';
+  } else if (view === 'tag') {
+    body = '<div class="tagsec">';
+    TAGS.slice().sort().forEach(function(t){
+      const list = G.filter(function(g){ return g.tags.indexOf(t) >= 0; });
+      if (!list.length) return;
+      body += '<h4>' + HJ(t) + '</h4>';
+      list.forEach(function(g){
+        body += '<span class="chip' + (g.n===cur?' on':'') + '" data-n="' + g.n + '">' + HJ(g.name) + '</span>';
+      });
+    });
+    body += '</div>';
+  } else if (view === 'sit') {
+    body = (typeof situHTML === 'function') ? situHTML() : '<div class="favempty">' + HM('处境索引未加载。') + '</div>';
+  } else if (view === 'shi') {
+    body = shiTimelineHTML();
+  } else if (view === 'fav') {
+    const items = fav.map(favItem).filter(Boolean);
+    body = items.length
+      ? items.map(function(it){
+          return '<div class="fitem" data-n="' + it.n + '">'
+            + '<div class="fh"><span class="fp">' + HJ(gua(it.n).name) + ' · ' + it.part + '</span>'
+            + '<span class="fav" data-fav="' + it.k + '" title="' + HM('取消收藏') + '">★</span></div>'
+            + '<div class="ft">' + esc(it.text) + '</div></div>';
+        }).join('')
+      : '<div class="favempty">' + HM('还没有收藏的句子。') + '<br>'
+        + HM('在每条卦辞 / 爻辞右侧点 ☆ 即可收藏，从左侧「★」页随时取回。') + '</div>';
+  } else {
+    body = G.map(gitemHTML).join('');
+  }
+  el.innerHTML = top + body;
+  bindSideMin(el);
+  el.querySelectorAll('#viewSeg button').forEach(function(b){
+    b.onclick = function(){ view = b.dataset.v; renderSide(); };
+  });
+  el.querySelectorAll('.gcell,.gitem,.chip[data-n],.shiitem[data-n]').forEach(function(c){
+    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
+  });
+  /* 〔境〕处境卡点击：跳到该卦，并定位到建议首读的那一爻 */
+  el.querySelectorAll('.siturow[data-n]').forEach(function(c){
+    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); jumpYao(c.dataset.y); };
+  });
+  el.querySelectorAll('.fitem').forEach(function(c){
+    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); window.scrollTo({top:0,behavior:'smooth'}); };
+  });
+  el.querySelectorAll('.fitem .fav').forEach(function(s){
+    s.onclick = function(e){ e.stopPropagation(); toggleFav(s.dataset.fav); };
+  });
+}
+
+/* ---------------- 推演 ---------------- */
+function derive(lines, mv){
+  const chg  = lines.split('').map(function(c,i){ return mv[i] ? (c==='1'?'0':'1') : c; }).join('');
+  const cuo  = lines.split('').map(function(c){ return c==='1'?'0':'1'; }).join('');
+  const zong = lines.split('').reverse().join('');
+  const hu   = (lines[1]+lines[2]+lines[3]) + (lines[2]+lines[3]+lines[4]);
+  return {chg:chg, cuo:cuo, zong:zong, hu:hu};
+}
+function tuCard(k, lines, note){
+  const t = xsTili(k), g = guaByLines(lines);
+  return '<div class="tcard" data-n="' + (g ? g.n : '') + '" title="' + HM(t.src) + '">'
+    + '<div class="tt">' + HJ(t.nm) + '<span class="tal">' + HJ(t.alias) + '</span></div>'
+    + tuHTML(lines, 'mid', null, false, g ? wxOf(g) : null)
+    + '<div class="tn">' + (g ? HJ(g.name) : '—') + '</div>'
+    + '<div class="td">' + note + '</div></div>';
+}
+
+/* 象數體例面板：上下二體 / 六爻爻位 / 卦序對偶 / 八卦體例表 */
+function xsPanelHTML(g){
+  const lines = linesOf(g), y = xsYao(lines), sm = xsSum(lines), p = xsPair(g.n);
+  let h = '<details class="xsbox"' + (xsOpen ? ' open' : '') + '><summary>'
+    + HJ('〔象〕') + HM('象數體例') + '<span class="xstag">' + HM('漢易象數通例') + '</span></summary>'
+    + '<div class="xsbd">';
+
+  h += '<div class="xsh">' + HM('上下二體') + '</div>';
+  [['下', g.down], ['上', g.up]].forEach(function(pair){
+    const x = XS8[pair[1]];
+    h += '<div class="xsrow"><b>' + HJ(pair[0]) + HJ(pair[1]) + '</b><span>'
+      + HM('德：' + x.de + '　象：' + x.nat + '　人倫：' + x.ren + '　方位：' + x.dir + '　五行：' + x.wx)
+      + '</span></div>';
+  });
+  h += '<div class="xsrow"><b>' + HM('剛柔') + '</b><span>' + HM(sm.yang + ' 陽 ' + sm.yin + ' 陰　'
+    + sm.dang + '/6 當位　' + sm.ying + '/3 有應') + '</span></div>';
+
+  h += '<div class="xsh">' + HM('六爻爻位') + '</div>';
+  y.forEach(function(a){
+    h += '<div class="xsrow"><b>' + HJ(a.name) + '</b><span>'
+      + HM((a.dang ? '當位' : '失位') + (a.zhong ? ' · 得中' : '') + ' · '
+           + (a.ying ? '與' + a.pair + '有應' : '與' + a.pair + '敵應'))
+      + '<i>' + HM(a.dn) + '；' + HM(a.up) + '</i></span></div>';
+  });
+
+  h += '<div class="xsh">' + HM('卦序對偶') + '</div>';
+  h += '<div class="xsrow"><b>' + HM('非覆即變') + '</b><span>' + HM(
+      p ? '與第 ' + p.m + ' 卦 ' + p.name + ' 相' + p.rel
+        + '：《周易》六十四卦二二相耦，非覆（上下顛倒）即變（陰陽全反）。' : '—')
+    + '</span></div>';
+
+  h += '<div class="xsh">' + HM('八卦體例總表') + '</div>' + xsTableHTML();
+
+  h += '<div class="xsfoot">' + HM('卦德與取象出《說卦傳》；方位用後天八卦；爻位體例為漢易通例。'
+    + '以上供理解卦爻結構關係之用，不用於占驗。卦氣、爻辰、納甲屬術數一系，須配曆法干支，本站不涉。')
+    + '</div></div></details>';
+  return h;
+}
+
+/* ---------------- 复制 ---------------- */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('show'); }, 1600);
+}
+function put(s){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(s).catch(function(){ fallback(s); });
+  } else fallback(s);
+}
+function fallback(s){
+  const ta = document.createElement('textarea');
+  ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(ta);
+}
+/* 引用格式自带出处与署名：读者复制一次就是一次传播 */
+function quote(head, y, b){
+  return HM('《周易》') + ' · ' + head + '\n' + HM('原文：') + y
+       + '\n' + HM('今译：') + b + '\n' + HM('—— 读易 · 周易精读');
+}
+function cbtns(yuan, bai, head, key){
+  return '<span class="cbtns"><span class="cplab">' + HM('复制') + '</span>'
+    + '<button data-cp="y" data-y="' + esc(yuan) + '" title="' + HM('点击复制原文（不含今译）') + '">' + HM('原文') + '</button>'
+    + '<button data-cp="m" data-m="' + esc(bai)  + '" title="' + HM('点击复制今译（不含原文）') + '">' + HM('今译') + '</button>'
+    + '<button data-cp="q" data-q="' + esc(quote(head, yuan, bai)) + '" title="' + HM('点击复制引用：原文+今译+出处署名，可直接粘贴到文章或笔记') + '">' + HM('引用') + '</button>'
+    + (key ? starHTML(key) : '')
+    + '</span>';
+}
+
+function startFlow(tag){
+  const list = flowOf(tag);
+  if (!list.length) { toast(HM('这个主题下暂时没有可看的句子')); return; }
+  flowTag = tag; flowIdx = 0; gotoFlow();
+}
+function gotoFlow(){
+  const it = flowOf(flowTag)[flowIdx];
+  if (!it) return;
+  cur = it.n; resetMv(); setPos(it.k); pendingScroll = true; renderAll();
+}
+
+/* ---------------- 主体 ---------------- */
+/* ---------------- 义理层 ---------------- */
+const LAYER_DEF = [['chuan', '傳', '十翼互见']];
+let layers = {chuan:true};
+try { const L = localStorage.getItem('zy.layers'); if (L) layers = Object.assign(layers, JSON.parse(L)); } catch(e){}
+function saveLayers(){ try { localStorage.setItem('zy.layers', JSON.stringify(layers)); } catch(e){} }
+
+function layerRowHTML(){
+  return '<div class="layers">'
+    + '<span class="lchip' + (layers.chuan ? ' on' : '') + '" data-layer="chuan">'
+    + HJ('〔傳〕') + HM('十翼互见') + '</span>'
+    + '<span class="lsp">' + HM('每句下方：') + HJ('〔解〕') + HJ('〔用〕') + HJ('〔資〕') + '</span>'
+    + '<button class="lmini" data-suball="1">' + HM('全展开') + '</button>'
+    + '<button class="lmini" data-suball="0">' + HM('全收起') + '</button>'
+    + '</div>';
+}
+
+/* 〔傳〕十翼互见：序卦传 / 杂卦传 / 文言 */
+function panelChuan(g, sents, sidx){
+  const tot = sents.length;
+  let h = '';
+  function blk(k, ck, title, yuan, bai){
+    const head = HM('第') + g.n + HM('卦') + ' ' + HJ(g.name) + ' · ' + title;
+    return '<div class="card' + (curPos === k ? ' now' : '') + '"><div class="chead">'
+      + snumHTML(k, sidx[k], tot) + '<h3>' + title + '</h3>'
+      + cbtns(HJ(yuan), HM(bai), head, k) + '</div>'
+      + '<div class="yuan">' + annotate(yuan) + '</div>'
+      + '<div class="bai">' + HM(bai) + '</div>'
+      + subBlockHTML(g, 'chuan', ck) + '</div>';
+  }
+  const xu = XUGUA[g.n], za = ZAGUA[g.n], wy = WENYAN[g.n];
+  if (xu) h += blk(g.n + ':xu', 'xu', HM('序卦传 · 此卦因何而来'), xu[0], xu[1]);
+  if (za) h += blk(g.n + ':za', 'za', HM('杂卦传 · 此卦的对举'), za[0], za[1]);
+  if (wy) wy.forEach(function(w, j){
+    h += blk(g.n + ':wy' + j, 'wy' + j, HM('文言') + ' · ' + HM('第') + (j + 1) + HM('段'), w[0], w[1]);
+  });
+  if (!wy) h += '<div class="card"><div class="chead"><h3>' + HM('文言传') + '</h3></div>'
+    + '<div class="pend">' + HM('文言传专为乾坤二卦而作，其余各卦无。') + '</div></div>';
+  return h;
+}
+
+/* 〔解〕历代解说：象数 / 义理 / 现代 三路对照 */
+function panelJie(g){
+  const L = lidaiOf(g);
+  return '<div class="card"><div class="chead"><h3>' + HJ('〔解〕') + HM('历代解说') + '</h3>'
+    + '<span class="gentag">' + HM(L.gen ? '依卦德推演' : '本卦专撰') + '</span></div>'
+    + '<div class="school"><b>' + HM('象数一路') + '</b>' + HM(L.xs) + '</div>'
+    + '<div class="school"><b>' + HM('义理一路') + '</b>' + HM(L.yl) + '</div>'
+    + '<div class="school"><b>' + HM('现代读法') + '</b>' + HM(L.mo) + '</div>'
+    + '<div class="disclaim">' + HM('以上由本项目依历代易学方法自行撰述，是概述而非某一家原注的照录。') + '</div></div>';
+}
+
+/* 〔用〕处境卡：把卦象读成一种处境模型 */
+function panelYong(g){
+  const C = chujingOf(g);
+  const bai = HM('处境') + '：' + HM(C.sit) + '\n' + HM('判断依据') + '：' + HM(C.judge) + '\n'
+            + HM('可为') + '：' + HM(C.ok) + '\n' + HM('忌') + '：' + HM(C.no);
+  const head = HM('第') + g.n + HM('卦') + ' ' + HJ(g.name) + ' · ' + HM('处境卡');
+  return '<div class="card"><div class="chead"><h3>' + HJ('〔用〕') + HM('处境卡') + '</h3>'
+    + '<span class="gentag">' + HM(C.gen ? '依卦德推演' : '本卦专撰') + '</span>'
+    + cbtns(HJ(g.name + '（' + g.full + '）'), bai, head) + '</div>'
+    + '<div class="cjgrid">'
+    + '<div><h4>' + HM('处境') + '</h4><span>' + HM(C.sit) + '</span></div>'
+    + '<div><h4>' + HM('判断依据') + '</h4><span>' + HM(C.judge) + '</span></div>'
+    + '<div><h4>' + HM('可为') + '</h4><span>' + HM(C.ok) + '</span></div>'
+    + '<div><h4>' + HM('忌') + '</h4><span>' + HM(C.no) + '</span></div>'
+    + '</div>'
+    + '<div class="disclaim">' + HM('处境卡是把卦象读成一种处境模型，属义理引申，既非经文原意，也不用于预测。') + '</div></div>';
+}
+
+/* 〔資〕他书互见：其他典籍引《易》或可与本卦对读的句子 */
+function panelZi(g){
+  const items = HUJIAN.filter(function(x){ return x.gua.length === 0 || x.gua.indexOf(g.n) >= 0; });
+  let h = '<div class="card"><div class="chead"><h3>' + HJ('〔資〕') + HM('他书互见') + '</h3>'
+    + '<span class="gentag">' + items.length + ' ' + HM('条') + '</span></div>';
+  items.forEach(function(x){
+    h += '<div class="hj"><span class="hjsrc">' + HJ(x.src) + '</span>'
+      + '<div class="yuan">' + annotate(x.t) + '</div>'
+      + '<div class="bai">' + HM(x.m) + '</div>'
+      + '<div class="hjlink">' + (x.gua.length
+          ? x.gua.map(function(n){ return '<span class="chip" data-n="' + n + '">' + HJ(gua(n).name) + '</span>'; }).join('')
+          : '<span class="hjall">' + HM('通论 · 不专属某一卦') + '</span>')
+      + '</div></div>';
+  });
+  h += '<div class="disclaim">' + HM('引文为公有领域古籍原文，今译由本项目自研。') + '</div></div>';
+  return h;
+}
+
+
+/* ---------------- 句内折叠框 〔解〕〔用〕〔資〕 ---------------- */
+let subs = new Set();
+try { const sb = localStorage.getItem('zy.subs'); if (sb) subs = new Set(JSON.parse(sb)); } catch(e){}
+function saveSubs(){ try { localStorage.setItem('zy.subs', JSON.stringify([...subs])); } catch(e){} }
+/* 〔史〕只在該句確有史事時出現：六十四卦中有史可考者不過十餘卦，
+   若每句都掛一個史框，史層就成了噪音。 */
+function subDefs(kind, g, i){
+  if (kind === 'chuan') return [['jie','解','历代解说'], ['zi','資','他书互见']];
+  const d = [['jie','解','历代解说'], ['yong','用','处境卡'], ['xs','象','象数体例']];
+  if (g && shiHas(g.n, kind, +i)) d.push(['shi','史','史事互证']);
+  d.push(['zi','資','他书互见']);
+  return d;
+}
+function subKeysOf(g){
+  const out = [['ci',0],['xiang',0]];
+  (YAO[g.n] || []).forEach(function(_, i){ out.push(['yao', i]); });
+  if (XUGUA[g.n])   out.push(['chuan','xu']);
+  if (ZAGUA[g.n])   out.push(['chuan','za']);
+  (WENYAN[g.n] || []).forEach(function(_, j){ out.push(['chuan','wy' + j]); });
+  return out;
+}
+function subAll(open){
+  const g = gua(cur);
+  subKeysOf(g).forEach(function(p){
+    subDefs(p[0], g, p[1]).forEach(function(d){
+      const k = g.n + ':' + p[0] + ':' + p[1] + ':' + d[0];
+      if (open) subs.add(k); else subs.delete(k);
+    });
+  });
+  saveSubs(); renderMain();
+}
+function subBlockHTML(g, kind, i){
+  const defs = subDefs(kind, g, i);
+  let h = '<div class="subbar">' + defs.map(function(d){
+    const k = g.n + ':' + kind + ':' + i + ':' + d[0];
+    return '<button class="sb' + (subs.has(k) ? ' on' : '') + '" data-sub="' + k + '">'
+         + HJ('〔') + HJ(d[1]) + HJ('〕') + HM(d[2]) + '</button>';
+  }).join('') + '</div>';
+  defs.forEach(function(d){
+    if (!subs.has(g.n + ':' + kind + ':' + i + ':' + d[0])) return;
+    h += '<div class="subbox">' + subBoxBody(g, d[0], kind, i) + '</div>';
+  });
+  return h;
+}
+function subRows(R){
+  return R.rows.map(function(r){
+    return '<div class="srow"><b>' + r[0] + '</b><span>' + r[1] + '</span></div>'; }).join('');
+}
+function subBoxBody(g, which, kind, i){
+  if (which === 'jie') {
+    const R = subJie(g, kind, i);
+    return '<h5>' + HJ('〔解〕') + HM('历代解说')
+      + '<span class="gentag">' + HM(R.gen ? '依卦德推演' : '本卦专撰') + '</span></h5>'
+      + subRows(R)
+      + '<div class="subdis">' + HM('以上由本项目依历代易学方法自行撰述，是概述而非某一家原注的照录。') + '</div>';
+  }
+  if (which === 'yong') {
+    const R = subYong(g, kind, i);
+    return '<h5>' + HJ('〔用〕') + HM('处境卡')
+      + '<span class="gentag">' + HM(R.gen ? '依卦德推演' : '本卦专撰') + '</span></h5>'
+      + subRows(R)
+      + '<div class="subdis">' + HM('处境卡是把卦象读成一种处境模型，属义理引申，既非经文原意，也不用于预测。') + '</div>';
+  }
+  if (which === 'xs') {
+    const R = kind === 'yao' ? xsSubYao(g, i) : (kind === 'xiang' ? xsSubXiang(g) : xsSubCi(g));
+    return '<h5>' + HJ('〔象〕') + HM('象数体例')
+      + '<span class="gentag">' + HM(kind === 'yao' ? '依爻位推算' : '依卦体推算') + '</span></h5>'
+      + subRows(R)
+      + '<div class="subdis">' + HM('当位、得中、应、承乘据皆汉易爻位通例：阳居初三五、阴居二四上为当位；二五为中位；'
+        + '初四、二五、三上阴阳相异为有应。此例用于读卦爻结构，不用于占验。') + '</div>';
+  }
+  if (which === 'shi') {
+    const R = shiSub(g, kind, i), c = shiSent(g.n, kind, i).length;
+    return '<h5>' + HJ('〔史〕') + HM('史事互证')
+      + '<span class="gentag">' + c + ' ' + HM('条') + '</span></h5>'
+      + subRows(R) + R.src
+      + '<div class="subdis">' + HM('以史证易，是近人顾颉刚《周易卦爻辞中的故事》（1929）所开的方法：把卦爻辞当史料读。'
+        + '但卦爻辞本是筮辞，可考者考之，不可考者存疑——凡标「推拟未定」者都只是旧说，不是定论。') + '</div>';
+  }
+  const items = subZi(g, kind === 'yao');
+  let s = '<h5>' + HJ('〔資〕') + HM('他书互见')
+    + '<span class="gentag">' + items.length + ' ' + HM('条') + '</span></h5>';
+  items.forEach(function(x){
+    s += '<div class="hj"><span class="hjsrc">' + HJ(x.src) + '</span>'
+      + '<div class="yuan">' + annotate(x.t) + '</div>'
+      + '<div class="bai">' + HM(x.m) + '</div>'
+      + '<div class="hjlink">' + (x.gua.length
+          ? x.gua.map(function(n){ return '<span class="chip" data-n="' + n + '">' + HJ(gua(n).name) + '</span>'; }).join('')
+          : '<span class="hjall">' + HM('通论 · 不专属某一卦') + '</span>')
+      + '</div></div>';
+  });
+  if (kind === 'yao')
+    s += '<div class="subdis">' + HM('爻下只列通论条目；本卦专属的互见条目见卦辞一栏。') + '</div>';
+  s += '<div class="subdis">' + HM('引文为公有领域古籍原文，今译由本项目自研。') + '</div>';
+  return s;
+}
+
+function renderMain(){
+  const g = gua(cur), lines = linesOf(g), d = derive(lines, moving);
+  const hasYao = !!YAO[cur];
+  const mvCount = moving.filter(Boolean).length;
+  const cD = wxColor(WUXING[g.down]), cU = wxColor(WUXING[g.up]);
+
+  let h = '<div class="ghead">'
+    + '<div>' + tuHTML(lines, 'big click', moving, true, wxOf(g))
+    + '<div class="mvbar">' + HM('点击爻线可设为动爻') + '</div></div>'
+    + '<div class="gtitle"><h1>' + HJ(g.name) + '</h1>'
+    + '<div class="meta">' + HM('第') + ' ' + g.n + ' ' + HM('卦') + ' · ' + HJ(g.full) + ' · '
+    + HM('下') + '<span class="wx" style="color:' + cD + '">' + HJ(g.down) + '</span>'
+    + '<span class="wx-dot" style="background:' + cD + '"></span>' + HM(WUXING[g.down]) + '，'
+    + HM('上') + '<span class="wx" style="color:' + cU + '">' + HJ(g.up) + '</span>'
+    + '<span class="wx-dot" style="background:' + cU + '"></span>' + HM(WUXING[g.up])
+    + '</div>'
+    + '<div class="full">' + g.tags.map(function(t){
+        return '<span class="chip" data-tag="' + t + '">' + HJ(t) + '</span>'; }).join('')
+    + '</div>'
+    + layerRowHTML()
+    + '</div></div>';
+
+  /* 阅读进度条已按需求移除；句子徽标 i/N 保留——它是序号，不是进度条 */
+  const sents = sentencesOf(g);
+
+  /* 主题阅读流：把该标签下的句子串成一条流，显示 第 i / 共 N 句 */
+  if (flowTag) {
+    const list = flowOf(flowTag), it = list[flowIdx];
+    h += '<div class="flowbar">'
+      + '<span class="fname">' + HM('主题') + ' · ' + HJ(flowTag) + '</span>'
+      + '<span class="fpos">' + HM('第') + ' ' + (flowIdx + 1) + ' / ' + list.length + ' ' + HM('句') + '</span>'
+      + '<button data-fl="prev"' + (flowIdx > 0 ? '' : ' disabled') + '>' + HM('上一句') + '</button>'
+      + '<button data-fl="next"' + (flowIdx < list.length - 1 ? '' : ' disabled') + '>' + HM('下一句') + '</button>'
+      + '<button data-fl="read">' + (it && isRead(it.k) ? HM('取消已读') : HM('标为已读')) + '</button>'
+      + '<button data-fl="exit">' + HM('退出') + '</button>'
+      + '</div>';
+  }
+
+  h += '<div class="usebar">'
+    + '<span class="u cp"><b>⧉ ' + HM('原文 / 今译 / 引用') + '</b> ' + HM('= 点一下即复制到剪贴板，「引用」自带出处与署名，可直接粘贴') + '</span>'
+    + '<span class="u"><b>' + HM('点击爻线') + '</b> ' + HM('= 设为动爻，下方四张推演卡（卦變 / 互體 / 旁通 / 反對）实时更新') + '</span>'
+    + '<span class="u"><b>' + HM('虚线下划的词') + '</b> ' + HM('= 点一下看字词释义（顶栏「字注」可关）') + '</span>'
+    + '<span class="u"><b>☆</b> ' + HM('= 收藏这一句（每条卦辞 / 爻辞各有一个），从左侧「★」页取回') + '</span>'
+    + '<span class="u"><b>' + HM('第 1/9 徽标') + '</b> ' + HM('= 本卦第几句 / 共几句，点一下标记为已读；点主题标签进入主题阅读流') + '</span>'
+    + '<span class="u"><b>' + HJ('〔解〕〔用〕〔資〕') + '</b> ' + HM('= 每句下方三个可展开的框：历代解说 / 处境卡 / 他书互见，点开即在原句下面成框。') + '</span>'
+    + '<span class="u"><b>' + HJ('〔傳〕') + '</b> ' + HM('= 卦名下方开关，控制十翼（序卦 / 杂卦 / 文言）是否作为句子计入本卦') + '</span>'
+    + '<span class="u"><b>' + HJ('〔象〕') + '</b> ' + HM('= 每句下方的第四个小框：该句在汉易象数里的体例（当位 / 得中 / 应 / 承乘据）') + '</span>'
+    + '<span class="u"><b>' + HJ('〔史〕') + '</b> ' + HM('= 卦名下方的第五层：本卦卦爻辞里的人与事、《左传》《国语》怎么用这一卦。'
+      + '有史的句子才会在句下多出一个〔史〕框；左侧「史」页按时代排一条时间轴。') + '</span>'
+    + '<span class="u"><b>' + HM('右侧「问小助手」') + '</b> ' + HM('= 常驻右栏，可问卦、问字词、问用法；在「模型设置」里也可接远程模型') + '</span>'
+    + '</div>';
+
+  h += '<div class="tui">'
+    + tuCard('chg',  d.chg,  mvCount ? HM('动爻阴阳互变，一卦由此入彼卦') : HM('未设动爻，仍在本卦'))
+    + tuCard('hu',   d.hu,   HM('二三四爻成下互，三四五爻成上互'))
+    + tuCard('cuo',  d.cuo,  HM('六爻阴阳全面相反'))
+    + tuCard('zong', d.zong, HM('卦画整体上下颠倒'))
+    + '</div>';
+  h += '<div class="tuifoot">' + HM('四张卡依次是汉易体例：')
+    + '<b>' + HJ('卦變') + '</b>' + HM('（俗称变卦）、')
+    + '<b>' + HJ('互體') + '</b>' + HM('（互卦）、')
+    + '<b>' + HJ('旁通') + '</b>' + HM('（错卦）、')
+    + '<b>' + HJ('反對') + '</b>' + HM('（综卦）。鼠标停在卡上可见各体例出处。') + '</div>';
+  h += xsPanelHTML(g);
+  h += shiPanelHTML(g);
+
+  const head1 = HM('第') + g.n + HM('卦') + ' ' + HJ(g.name) + '（' + HJ(g.full) + '）· ' + HM('卦辞');
+  h += '<div class="card' + (curPos === cur + ':ci' ? ' now' : '') + '"><div class="chead">'
+    + snumHTML(cur + ':ci', 0, sents.length) + '<h3>' + HM('卦辞') + '</h3>'
+    + cbtns(HJ(g.ci), HM(g.ciM), head1, cur + ':ci') + '</div>';
+  if (mode !== 'bai')  h += '<div class="yuan">' + annotate(g.ci) + '</div>';
+  if (mode !== 'yuan') h += '<div class="bai">' + HM(g.ciM) + '</div>';
+  h += subBlockHTML(g, 'ci', 0);
+  h += '</div>';
+
+  const head2 = HM('第') + g.n + HM('卦') + ' ' + HJ(g.name) + ' · ' + HM('大象传');
+  h += '<div class="card' + (curPos === cur + ':xiang' ? ' now' : '') + '"><div class="chead">'
+    + snumHTML(cur + ':xiang', 1, sents.length) + '<h3>' + HM('大象传') + '</h3>'
+    + cbtns(HJ(g.xiang), HM(g.xiangM), head2, cur + ':xiang') + '</div>';
+  if (mode !== 'bai')  h += '<div class="yuan">' + annotate(g.xiang) + '</div>';
+  if (mode !== 'yuan') h += '<div class="bai">' + HM(g.xiangM) + '</div>';
+  h += subBlockHTML(g, 'xiang', 0);
+  h += '</div>';
+
+  h += '<div class="card"><div class="chead"><h3>'
+    + HM('爻辞') + (hasYao ? '' : '（' + HM('待补') + '）') + '</h3></div>';
+  if (hasYao) {
+    YAO[cur].forEach(function(y, i){
+      const head = HJ(g.name) + HM('卦') + ' · ' + HJ(y.t);
+      h += '<div class="ycard card' + (moving[i] ? ' mv' : '') + (curPos === cur + ':y' + i ? ' now' : '')
+        + '" data-yao="' + i + '" data-yt="' + HJ(y.t) + '">'
+        + '<div class="chead">'
+        + snumHTML(cur + ':y' + i, 2 + i, sents.length)
+        + '<h3>' + HJ(y.t) + '</h3>'
+        + cbtns(HJ(y.c), HM(y.m), head, cur + ':y' + i) + '</div>';
+      if (mode !== 'bai') h += '<div class="yuan" style="font-size:16px">' + annotate(y.c) + '</div>';
+      if (mode !== 'yuan') h += '<div class="bai">' + HM(y.m) + '</div>';
+      if (mode !== 'bai' && y.x) h += '<div class="xiao">' + annotate(y.x) + '</div>';
+      if (y.z && y.z.length && mode !== 'yuan') {
+        h += '<div class="zi">' + y.z.map(function(z){
+          return '<div class="z t-' + (ZTONE[HJ(z[0])] || 'metal') + '"><b>'
+               + HJ(z[0]) + '</b>' + HM(z[1]) + '</div>';
+        }).join('') + '</div>';
+      }
+      h += subBlockHTML(g, 'yao', i);
+      h += '</div>';
+    });
+  } else {
+    h += '<div class="pend">' + HM('本卦逐爻辞、今译与注释尚在整理中。数据结构已就位，填入 data.js 的 YAO 对象即可显示。') + '</div>';
+  }
+  h += '</div>';
+
+  /* 义理层面板：按开关渲染 */
+  const sidx = {}; sents.forEach(function(x, i){ sidx[x.k] = i; });
+  if (layers.chuan) h += panelChuan(g, sents, sidx);
+
+  h += '<div class="card"><div class="chead"><h3>' + HM('数据库 · 说卦传取象') + '</h3></div>'
+    + '<div class="guanlian">'
+    + '<b>' + HM('下卦') + ' ' + HJ(g.down) + '</b>：' + annotate(XIANG_TRI[g.down]) + '<br><br>'
+    + '<b>' + HM('上卦') + ' ' + HJ(g.up) + '</b>：' + annotate(XIANG_TRI[g.up]) + '</div>'
+    + '<div class="legend">'
+    + ['木','火','土','金','水'].map(function(e){
+        return '<span><span class="wx-dot" style="background:' + wxColor(e) + '"></span>' + e + '</span>'; }).join('')
+    + [['字义','土'],['象数','水'],['义理','火'],['筮例','木']].map(function(p){
+        return '<span><span class="wx-dot" style="background:' + wxColor(p[1]) + '"></span>' + HM(p[0]) + '</span>'; }).join('')
+    + '<span>⧉ ' + HM('= 可点击复制') + '</span>'
+    + '</div></div>';
+
+  h += '<div class="note">' + HM('经文为公有领域古籍原文。今译、注释与字词典由本项目自行研撰，非译自任何现代白话译本。')
+     + HM('卦象推演与五行编码用于理解卦爻的结构关系，不提供占卜或预测服务。') + '</div>';
+
+  const m = document.getElementById('main');
+  m.innerHTML = h;
+
+  m.querySelectorAll('.tu.click .y').forEach(function(y){
+    y.onclick = function(){ moving[+y.dataset.yao] = !moving[+y.dataset.yao]; renderAll(); };
+  });
+  m.querySelectorAll('.ycard').forEach(function(c){
+    c.onclick = function(e){
+      if (e.target.closest('.cbtns') || e.target.closest('.zi') || e.target.closest('.kw')) return;
+      const i = +c.dataset.yao;
+      if (YAO[cur] && i < YAO[cur].length) { moving[i] = !moving[i]; renderAll(); }
+    };
+  });
+  m.querySelectorAll('.tcard').forEach(function(c){
+    const n = +c.dataset.n;
+    if (n) c.onclick = function(){ cur = n; resetMv(); renderAll(); window.scrollTo({top:0,behavior:'smooth'}); };
+  });
+  m.querySelectorAll('.lchip').forEach(function(c){
+    c.onclick = function(){ layers[c.dataset.layer] = !layers[c.dataset.layer]; saveLayers(); renderMain(); };
+  });
+  m.querySelectorAll('.sb').forEach(function(b){
+    b.onclick = function(e){
+      e.stopPropagation();
+      const k = b.dataset.sub;
+      if (subs.has(k)) subs.delete(k); else subs.add(k);
+      saveSubs(); renderMain();
+    };
+  });
+  m.querySelectorAll('[data-suball]').forEach(function(b){
+    b.onclick = function(e){ e.stopPropagation(); subAll(b.dataset.suball === '1'); };
+  });
+  m.querySelectorAll('.hjlink .chip[data-n]').forEach(function(c){
+    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
+  });
+  const xsb = m.querySelector('.xsbox:not(.shbox)');
+  if (xsb) xsb.ontoggle = function(){ xsOpen = !!xsb.open; };
+  const shb = m.querySelector('.shbox');
+  if (shb) shb.ontoggle = function(){ shiOpen = !!shb.open; };
+  m.querySelectorAll('.chip[data-tag]').forEach(function(c){
+    c.onclick = function(){ startFlow(c.dataset.tag); };
+  });
+  m.querySelectorAll('.snum').forEach(function(s){
+    s.onclick = function(e){
+      e.stopPropagation();
+      setPos(s.dataset.rd); toggleRead(s.dataset.rd);
+    };
+  });
+  m.querySelectorAll('.flowbar button').forEach(function(b){
+    b.onclick = function(){
+      const a = b.dataset.fl, list = flowOf(flowTag);
+      if (a === 'prev' && flowIdx > 0) { flowIdx--; gotoFlow(); }
+      else if (a === 'next' && flowIdx < list.length - 1) { flowIdx++; gotoFlow(); }
+      else if (a === 'read') { const it = list[flowIdx]; if (it) { setPos(it.k); toggleRead(it.k); } }
+      else if (a === 'exit') { flowTag = null; renderMain(); }
+    };
+  });
+  m.querySelectorAll('.progbox button').forEach(function(b){
+    b.onclick = function(){
+      if (b.dataset.act === 'clr') {
+        sentencesOf(g).forEach(function(s){ read.delete(s.k); });
+        saveRead(); renderAll(); toast(HM('已清除本卦的已读标记'));
+      }
+    };
+  });
+  if (pendingScroll && m.querySelector) {
+    const cs = m.querySelector('.card.now');
+    if (cs && cs.scrollIntoView) cs.scrollIntoView({block:'center', behavior:'smooth'});
+    pendingScroll = false;
+  }
+  m.querySelectorAll('.cbtns button[data-cp]').forEach(function(b){
+    b.onclick = function(e){
+      e.stopPropagation();
+      const t = b.dataset;
+      if (!t.cp) return;
+      if (t.cp === 'y') { put(t.y); toast(HM('已复制原文')); }
+      if (t.cp === 'm') { put(t.m); toast(HM('已复制今译')); }
+      if (t.cp === 'q') { put(t.q); toast(HM('已复制引用（含出处与署名）')); }
+      b.classList.add('done');
+      setTimeout(function(){ b.classList.remove('done'); }, 1300);
+    };
+  });
+  /* 星标放在所有按钮绑定之后：绝不能被后写的 .cbtns button 之类规则覆盖掉 onclick */
+  m.querySelectorAll('.cbtns .star').forEach(function(s){
+    s.onclick = function(e){
+      e.stopPropagation();
+      toggleFav(s.dataset.fav);
+      toast(HM(isFav(s.dataset.fav) ? '已收藏这一句，从左侧「★」页取回' : '已取消收藏'));
+    };
+  });
+  bindKw(m);
+}
+
+/* ---------------- 字词弹层 ---------------- */
+function bindKw(root){
+  const tip = document.getElementById('tip');
+  root.querySelectorAll('.kw').forEach(function(k){
+    k.onclick = function(e){
+      e.stopPropagation();
+      const key = k.dataset.k, def = GLOSS_MAP[key];
+      if (!def) return;
+      const was = k.classList.contains('on');
+      root.querySelectorAll('.kw.on').forEach(function(x){ x.classList.remove('on'); });
+      if (was) { tip.style.display = 'none'; return; }
+      k.classList.add('on');
+      tip.innerHTML = '<div class="tt">' + HM('字词') + '</div><span class="tk">'
+                    + esc(key) + '</span>' + esc(def);
+      tip.style.display = 'block';
+      const r = k.getBoundingClientRect();
+      let left = r.left, top = r.bottom + 8;
+      if (left + 300 > window.innerWidth) left = window.innerWidth - 306;
+      if (top + tip.offsetHeight > window.innerHeight - 10) top = r.top - tip.offsetHeight - 8;
+      tip.style.left = Math.max(8, left) + 'px';
+      tip.style.top = Math.max(8, top) + 'px';
+    };
+  });
+}
+document.addEventListener('click', function(e){
+  if (!e.target.closest('.kw') && !e.target.closest('#tip')) {
+    document.getElementById('tip').style.display = 'none';
+    document.querySelectorAll('.kw.on').forEach(function(x){ x.classList.remove('on'); });
+  }
+});
+
+/* ---------------- 顶栏与初始化 ---------------- */
+const MODE_LABEL = {'both':'文白对照','yuan':'仅原文','bai':'仅今译'};
+function applyScriptUI(){
+  document.querySelectorAll('#scriptSeg button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.s === SCRIPT);
+  });
+  document.querySelectorAll('#ziSeg button').forEach(function(b){
+    b.classList.toggle('on', (b.dataset.z === '1') === ziOn);
+  });
+  document.querySelectorAll('#modeSeg button').forEach(function(b){
+    b.textContent = HM(MODE_LABEL[b.dataset.m]);
+  });
+  document.title = HM('读易 · 周易精读');
+  document.getElementById('sub').textContent = HM('周易精读');
+  document.getElementById('q').placeholder = HM('搜索卦名 / 卦辞 / 标签');
+}
+/* 〔境〕定位到建议首读的那一爻并短暂高亮 */
+function jumpYao(yt){
+  if (!yt) return;
+  setTimeout(function(){
+    var t = document.querySelector('#main .ycard[data-yt="' + yt + '"]');
+    if (!t) return;
+    t.classList.add('hit');
+    t.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function(){ t.classList.remove('hit'); }, 2600);
+  }, 80);
+}
+function renderAll(){ renderSide(); renderMain(); }
+
+document.getElementById('scriptSeg').onclick = function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  SCRIPT = b.dataset.s;
+  try { localStorage.setItem('zy.script', SCRIPT); } catch(err){}
+  buildGloss(); applyScriptUI(); renderAll();
+};
+document.getElementById('ziSeg').onclick = function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  ziOn = b.dataset.z === '1';
+  try { localStorage.setItem('zy.zi', ziOn ? '1' : '0'); } catch(err){}
+  applyScriptUI(); renderMain();
+};
+document.getElementById('modeSeg').onclick = function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  mode = b.dataset.m;
+  this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+  renderMain();
+};
+document.getElementById('themeSeg').onclick = function(e){
+  const b = e.target.closest('button'); if (!b) return;
+  theme = b.dataset.t;
+  try { localStorage.setItem('zy.theme', theme); } catch(err){}
+  applyTheme();
+};
+document.getElementById('q').oninput = function(){
+  const k = this.value.trim();
+  const el = document.getElementById('side');
+  if (!k) { renderSide(); return; }
+  const hit = G.filter(function(g){
+    return [g.name, g.full, String(g.n), g.ci, g.tags.join(',')].some(function(s){
+      return s.indexOf(k) >= 0 || HJ(s).indexOf(k) >= 0;
+    });
+  });
+  let body = hit.map(gitemHTML).join('');
+  el.innerHTML = sideTopHTML('')
+    + (body || '<div class="favempty">' + HM('未找到') + '</div>');
+  bindSideMin(el);
+  el.querySelectorAll('.gitem').forEach(function(c){
+    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
+  });
+};
+
+
+/* ---------------- 右侧小助手 ---------------- */
+let aiHist = [];
+/* 助手默认常驻，aioff 才是「隐藏」 */
+function aiToggle(open){
+  const on = open === undefined ? document.body.classList.contains('aioff') : open;
+  document.body.classList.toggle('aioff', !on);
+  document.body.classList.toggle('aiforce', !!on);   /* 窄屏下唤出为浮层 */
+  try { localStorage.setItem('zy.aion', on ? '1' : '0'); } catch(e){}
+  syncTog();
+  if (on && !aiHist.length) aiWelcome();
+  if (on) { const q = document.getElementById('aiq'); if (q) q.focus(); }
+}
+function sideToggle(open){
+  const on = open === undefined ? document.body.classList.contains('sideoff') : open;
+  document.body.classList.toggle('sideoff', !on);
+  try { localStorage.setItem('zy.sideon', on ? '1' : '0'); } catch(e){}
+  syncTog();
+}
+/* 目录收缩：aside 让位，露出竖排窄轨；点窄轨再展开 */
+function sideCollapse(collapsed){
+  const c = collapsed === undefined ? !document.body.classList.contains('sidecollapse') : collapsed;
+  document.body.classList.toggle('sidecollapse', c);
+  try { localStorage.setItem('zy.sidecol', c ? '1' : '0'); } catch(e){}
+}
+function bindSideMin(el){
+  el.querySelectorAll('.minbtn').forEach(function(b){
+    b.onclick = function(){ sideCollapse(true); };
+  });
+}
+function syncTog(){
+  const st = document.getElementById('sideTog'), at = document.getElementById('aiTog');
+  if (st) st.classList.toggle('on', !document.body.classList.contains('sideoff'));
+  if (at) at.classList.toggle('on', !document.body.classList.contains('aioff'));
+}
+function aiCfgUI(){
+  const c = aiCfg() || {endpoint:'', key:'', model:'gpt-4o-mini'};
+  const e = document.getElementById('aiEp'), k = document.getElementById('aiKey'), m = document.getElementById('aiModel');
+  if (e) e.value = c.endpoint || '';
+  if (k) k.value = c.key || '';
+  if (m) m.value = c.model || 'gpt-4o-mini';
+  const st = document.getElementById('aistat');
+  if (st) st.textContent = HM(c.endpoint ? '远程模型 · ' + (c.model || '') : '离线 · 读本站数据');
+}
+function aiSaveCfg(ep, key, model){
+  try { localStorage.setItem('zy.ai', JSON.stringify({endpoint:ep||'', key:key||'', model:model||'gpt-4o-mini'})); } catch(e){}
+  aiCfgUI();
+  toast(HM(ep ? '已接上远程模型' : '已切回离线引擎'));
+}
+function msgHTML(x){
+  if (x.role === 'q') return '<div class="msg q"><span class="mq">' + esc(x.text) + '</span></div>';
+  const a = x.a;
+  let h = '<div class="msg"><div class="mtitle">' + a.title + '</div>';
+  a.blocks.forEach(function(b){
+    if (b.k === 'p')    h += '<div class="mp">' + b.v + '</div>';
+    else if (b.k === 'list') h += '<ul class="mul">' + b.v.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>';
+    else if (b.k === 'kv')   h += '<div class="mkv">' + b.v.map(function(p){
+      return '<div><b>' + p[0] + '</b><span>' + p[1] + '</span></div>'; }).join('') + '</div>';
+    else if (b.k === 'q')    h += '<div class="mquote">' + String(b.v).replace(/\n/g, '<br>') + '</div>';
+  });
+  if (a.go && a.go.length) h += '<div class="mgo">' + a.go.map(function(n){
+    return '<span class="chip" data-n="' + n + '">' + HJ(gua(n).name) + '</span>'; }).join('') + '</div>';
+  return h + '</div>';
+}
+function renderAI(){
+  const b = document.getElementById('aibody');
+  if (!b) return;
+  b.innerHTML = aiHist.map(msgHTML).join('');
+  b.querySelectorAll('.mgo .chip[data-n]').forEach(function(c){
+    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); window.scrollTo({top:0, behavior:'smooth'}); };
+  });
+  b.scrollTop = b.scrollHeight;
+}
+/* ---------------- 后台：问题反馈记录 ---------------- */
+function renderBugUI(){
+  const n = document.getElementById('bugn'), l = document.getElementById('buglist');
+  if (!n || !l) return;
+  const arr = bugLogs();
+  n.textContent = arr.length;
+  l.innerHTML = arr.length
+    ? arr.slice().reverse().slice(0, 20).map(function(r){
+        return '<div class="bugitem"><span class="bi">#' + r.id + '</span>'
+          + '<span class="bf">' + (r.feats && r.feats.length
+              ? r.feats.map(function(x){ return HJ(x); }).join('、') : HM('未定位功能')) + '</span>'
+          + '<span class="bq">' + esc(String(r.q)).slice(0, 160) + '</span>'
+          + '<span class="bt">' + esc(String(r.t)).slice(0, 19).replace('T', ' ')
+          + (r.gua ? HM(' · 第') + r.gua + HM('卦') : '') + '</span></div>';
+      }).join('')
+    : '<div class="ahint">' + HM('还没有记录。') + '</div>';
+}
+function bugExport(){
+  try {
+    const blob = new Blob([JSON.stringify(bugLogs(), null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'zhouyi-buglog.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast(HM('已导出 JSON'));
+  } catch(e){ toast(HM('导出失败')); }
+}
+function aiPush(x){ aiHist.push(x); renderAI(); }
+function aiWelcome(){
+  aiPush({role:'a', a:{title:HM('可以问我这些'), go:[], blocks:[
+    {k:'p', v:HM('我读的是本站自己的数据：六十四卦的卦辞、大象传、爻辞与自研今译。不提供占卜与预测。')},
+    {k:'list', v:QA_PRESET.map(function(t){ return HM(t); })}
+  ]}});
+}
+function aiAsk(text){
+  const q = String(text || '').trim();
+  if (!q) return;
+  aiPush({role:'q', text:q});
+  /* 功能性 bug 反馈优先：先记后台，再回固定话术，不进问答引擎 */
+  const bug = bugDetect(q);
+  if (bug) {
+    const no = logBug(q, bug.feats);
+    aiPush({role:'a', a:bugReply(bug.feats, no)});
+    return;
+  }
+  const pend = {role:'a', a:{title:HM('正在查'), go:[], blocks:[{k:'p', v:HM('…')}]}};
+  aiPush(pend);
+  ask(q, function(a){
+    aiHist = aiHist.filter(function(x){ return x !== pend; });
+    aiPush({role:'a', a:a || {title:HM('没有答案'), go:[], blocks:[{k:'p', v:HM('换个说法试试。')}]}});
+  });
+}
+function initAI(){
+  try {
+    const send = function(){
+      const i = document.getElementById('aiq');
+      aiAsk(i.value); i.value = '';
+    };
+    document.getElementById('aisend').onclick = send;
+    document.getElementById('aiq').onkeydown = function(e){ if (e.key === 'Enter') send(); };
+    const ps = document.getElementById('aipreset');
+    ps.innerHTML = QA_PRESET.map(function(t){ return '<span class="pchip">' + HM(t) + '</span>'; }).join('');
+    ps.querySelectorAll('.pchip').forEach(function(c){
+      c.onclick = function(){ const i = document.getElementById('aiq'); i.value = c.textContent; send(); };
+    });
+    document.getElementById('aiclear').onclick = function(){ aiHist = []; aiWelcome(); };
+    document.getElementById('aiSave').onclick = function(){
+      aiSaveCfg(
+        document.getElementById('aiEp').value.trim(),
+        document.getElementById('aiKey').value.trim(),
+        document.getElementById('aiModel').value.trim()
+      );
+    };
+    document.getElementById('aiReset').onclick = function(){ aiSaveCfg('', '', 'gpt-4o-mini'); };
+    aiCfgUI();
+
+    /* 后台：问题反馈记录面板 */
+    document.getElementById('bugSave').onclick = function(){
+      const ep = document.getElementById('bugEp').value.trim();
+      try { localStorage.setItem('zy.bugep', JSON.stringify({ep:ep})); } catch(e){}
+      toast(HM(ep ? '上报地址已保存' : '已取消上报'));
+      renderBugUI();
+    };
+    document.getElementById('bugExport').onclick = bugExport;
+    document.getElementById('bugClear').onclick = function(){
+      try { localStorage.removeItem('zy.buglog'); } catch(e){}
+      renderBugUI(); toast(HM('反馈记录已清空'));
+    };
+    const bc = bugCfg();
+    if (bc && bc.ep) document.getElementById('bugEp').value = bc.ep;
+    renderBugUI();
+
+    /* 目录 / 助手：默认都展开，状态存本地 */
+    let sideOn = true, aiOn = true;
+    try {
+      if (localStorage.getItem('zy.sideon') === '0') sideOn = false;
+      if (localStorage.getItem('zy.aion')   === '0') aiOn   = false;
+    } catch(e){}
+    document.getElementById('sideTog').onclick = function(){ sideToggle(); };
+    document.getElementById('sideRail').onclick = function(){ sideCollapse(false); };
+    document.getElementById('aiTog').onclick   = function(){ aiToggle(); };
+    document.body.classList.toggle('sideoff', !sideOn);
+    document.body.classList.toggle('sidecollapse', localStorage.getItem('zy.sidecol') === '1');
+    document.body.classList.toggle('aioff', !aiOn);
+    syncTog();
+
+    renderAI();
+    if (aiOn) aiWelcome();
+  } catch(e){}
+}
+
+applyTheme();
+buildGloss();
+applyScriptUI();
+renderAll();
+initAI();
+</script>
+</body>
+</html>
