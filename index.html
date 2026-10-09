@@ -516,8 +516,8 @@ body.aioff #ai{display:none}
 <body>
 
 <header>
-  <div class="logo">读易<small id="sub">周易精读</small></div>
-  <input type="search" id="q" placeholder="搜索卦名 / 卦辞 / 标签">
+  <div class="logo"><span id="logoTx">读易</span><small id="sub">周易精读</small></div>
+  <input type="search" id="q" placeholder="搜索卦名 / 卦辞 / 爻辞 / 标签">
   <div class="seg" id="scriptSeg">
     <button data-s="simp" class="on">简体</button>
     <button data-s="trad">繁体</button>
@@ -579,22 +579,22 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=8"></script>
-<script src="gloss.js?v=8"></script>
-<script src="data.js?v=8"></script>
-<script src="layer.js?v=8"></script>
-<script src="sub.js?v=8"></script>
-<script src="xs.js?v=8"></script>
-<script src="shi.js?v=8"></script>
-<script src="qa.js?v=8"></script>
-<script src="yao_p1.js?v=8"></script>
-<script src="yao_p2.js?v=8"></script>
-<script src="yao_p3.js?v=8"></script>
-<script src="yao_p4.js?v=8"></script>
-<script src="yao_p5.js?v=8"></script>
-<script src="yao_p6.js?v=8"></script>
-<script src="situation.js?v=8"></script>
-<script src="topic.js?v=8"></script>
+<script src="han.js?v=9"></script>
+<script src="gloss.js?v=9"></script>
+<script src="data.js?v=9"></script>
+<script src="layer.js?v=9"></script>
+<script src="sub.js?v=9"></script>
+<script src="xs.js?v=9"></script>
+<script src="shi.js?v=9"></script>
+<script src="qa.js?v=9"></script>
+<script src="yao_p1.js?v=9"></script>
+<script src="yao_p2.js?v=9"></script>
+<script src="yao_p3.js?v=9"></script>
+<script src="yao_p4.js?v=9"></script>
+<script src="yao_p5.js?v=9"></script>
+<script src="yao_p6.js?v=9"></script>
+<script src="situation.js?v=9"></script>
+<script src="topic.js?v=9"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -880,6 +880,10 @@ function renderSide(){
   });
   el.querySelectorAll('.gcell,.gitem,.chip[data-n],.shiitem[data-n]').forEach(function(c){
     c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
+  });
+  /* 〔史〕通论条目（gua:0，无 data-n）：不对应具体卦，点一下给个说明，别让人以为没点上 */
+  el.querySelectorAll('.shiitem:not([data-n])').forEach(function(c){
+    c.onclick = function(){ toast(HM('此条为通论，不对应具体卦')); };
   });
   /* 〔境〕处境卡点击：跳到该卦，并定位到建议首读的那一爻。
      跳卦会重绘侧栏，这里先把所属处境记成「展开」，重绘后它就不会收起 */
@@ -1457,9 +1461,26 @@ function applyScriptUI(){
   document.querySelectorAll('#modeSeg button').forEach(function(b){
     b.textContent = HM(MODE_LABEL[b.dataset.m]);
   });
+  /* 顶栏其余硬编码文案也统一走 HM()，繁体模式下不再留简体 */
+  document.querySelectorAll('#scriptSeg button').forEach(function(b){
+    b.textContent = HM(b.dataset.s === 'trad' ? '繁体' : '简体');
+  });
+  document.querySelectorAll('#ziSeg button').forEach(function(b){
+    b.textContent = HM(b.dataset.z === '1' ? '字注 开' : '字注 关');
+  });
+  document.querySelectorAll('#themeSeg button').forEach(function(b){
+    const night = b.dataset.t === 'night';
+    b.textContent = (night ? '☾ ' : '☀ ') + HM(night ? '夜间' : '日间');
+  });
+  const lg = document.getElementById('logoTx');
+  if (lg) lg.textContent = HM('读易');
+  const st = document.getElementById('sideTog');
+  if (st) { st.textContent = HM('☰ 目录'); st.title = HM('显示或隐藏左侧目录'); }
+  const at = document.getElementById('aiTog');
+  if (at) { at.textContent = HM('助手'); at.title = HM('显示或隐藏右侧小助手'); }
   document.title = HM('读易 · 周易精读');
   document.getElementById('sub').textContent = HM('周易精读');
-  document.getElementById('q').placeholder = HM('搜索卦名 / 卦辞 / 标签');
+  document.getElementById('q').placeholder = HM('搜索卦名 / 卦辞 / 爻辞 / 标签');
 }
 /* 〔境〕定位到建议首读的那一爻并短暂高亮 */
 function jumpYao(yt){
@@ -1472,7 +1493,25 @@ function jumpYao(yt){
     setTimeout(function(){ t.classList.remove('hit'); }, 2600);
   }, 80);
 }
-function renderAll(){ renderSide(); renderMain(); }
+/* ---------------- 当前卦与地址栏同步 ---------------- */
+/* 只认 #1–#64，其他 hash（锚点、空值）一律不动 cur */
+function hashGua(){
+  const m = /^#(\d{1,2})$/.exec(location.hash || '');
+  if (!m) return 0;
+  const n = +m[1];
+  return (n >= 1 && n <= 64) ? n : 0;
+}
+function syncHash(){
+  const h = '#' + cur;
+  if (location.hash === h) return;
+  try { history.replaceState(null, '', h); }
+  catch (e) { try { location.hash = h; } catch (e2) {} }
+}
+function renderAll(){ renderSide(); renderMain(); syncHash(); }
+window.addEventListener('hashchange', function(){
+  const n = hashGua();
+  if (n && n !== cur) { cur = n; resetMv(); renderAll(); }
+});
 
 document.getElementById('scriptSeg').onclick = function(e){
   const b = e.target.closest('button'); if (!b) return;
@@ -1498,15 +1537,27 @@ document.getElementById('themeSeg').onclick = function(e){
   try { localStorage.setItem('zy.theme', theme); } catch(err){}
   applyTheme();
 };
+/* 搜索用的「草堆」：卦名/卦辞/大象 + 全部爻辞字段（爻题/爻辞/今译/小象/注释）。
+   经文为繁体、今译为简体，故同时备 t2s / s2t / s2tm 三种形态，
+   这样在任一字形模式下搜「潜龙」「潛龍」都能命中。 */
+function guaHay(g){
+  const ys = (typeof YAO !== 'undefined' && YAO[g.n]) || [];
+  const p = [g.name, g.full, String(g.n), g.ci, g.ciM, g.xiang, g.xiangM, g.tags.join(',')];
+  ys.forEach(function(y){
+    p.push(y.t, y.c, y.m, y.x);
+    if (y.z) y.z.forEach(function(a){ p.push(a[0], a[1]); });
+  });
+  const raw = p.filter(Boolean).join('\n');
+  return raw + '\n' + t2s(raw) + '\n' + s2t(raw) + '\n' + s2tm(raw);
+}
+let HAY = null;
+function hayCache(){ if (!HAY) HAY = G.map(function(g){ return {n:g.n, s:guaHay(g)}; }); return HAY; }
 document.getElementById('q').oninput = function(){
   const k = this.value.trim();
   const el = document.getElementById('side');
   if (!k) { renderSide(); return; }
-  const hit = G.filter(function(g){
-    return [g.name, g.full, String(g.n), g.ci, g.tags.join(',')].some(function(s){
-      return s.indexOf(k) >= 0 || HJ(s).indexOf(k) >= 0;
-    });
-  });
+  const hit = hayCache().filter(function(h){ return h.s.indexOf(k) >= 0; })
+                        .map(function(h){ return gua(h.n); });
   let body = hit.map(gitemHTML).join('');
   el.innerHTML = sideTopHTML('')
     + (body || '<div class="favempty">' + HM('未找到') + '</div>');
@@ -1703,6 +1754,8 @@ function initAI(){
 applyTheme();
 buildGloss();
 applyScriptUI();
+/* 地址栏优先：#12 直接开履卦，刷新、分享、后退都停在同一卦 */
+{ const hn = hashGua(); if (hn) cur = hn; }
 renderAll();
 initAI();
 </script>
