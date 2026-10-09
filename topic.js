@@ -154,6 +154,91 @@ function topicHTML() {
   return h;
 }
 
+/* 〔主〕主题栏：词的平铺速查。
+   与「话题」栏的区别：话题栏按意义层级（大话题 › 面向 › 词）一层层看下去；
+   主题栏不管层级，全部词按拼音首字母 A–Z 排开，点字母一跳到位。
+   每个词右侧小字标它属于哪个话题，免得又变成「一个一个蹦词」。 */
+function tagBuckets() {
+  const b = {};
+  TOPICS.forEach(function (t) {
+    t.sub.forEach(function (s) {
+      s.tags.forEach(function (tag) {
+        const L = PY_LEAF[tag] || 'Z';
+        (b[L] = b[L] || []).push({ tag: tag, path: t.name + ' › ' + s.name });
+      });
+    });
+  });
+  return b;
+}
+
+function tagHTML() {
+  const openMap = (typeof tagOpenMap === 'object' && tagOpenMap) ? tagOpenMap : {};
+  const buckets = tagBuckets();
+  const letters = Object.keys(buckets).sort();
+
+  let h = '<div class="tagsec2">';
+  h += '<div class="topicidx">';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function (L) {
+    const has = !!buckets[L];
+    h += '<span class="tpi' + (has ? '' : ' off') + '"'
+      + (has ? ' data-tpy="' + L + '" title="' + HM('展开这一字母下的主题词') + '"' : '') + '>' + L + '</span>';
+  });
+  h += '</div>';
+  h += '<div class="topictip">' + HM('按词查：全部主题词按拼音首字母排，点字母直接跳过去。词后小字是它所属的话题。') + '</div>';
+
+  letters.forEach(function (L) {
+    h += '<div class="tpgrp" data-tpy="' + L + '"><div class="tpplet">' + L + '</div>';
+    buckets[L].slice().sort(function (a, b2) { return a.tag < b2.tag ? -1 : 1; }).forEach(function (it) {
+      const list = guasOfTag(it.tag);
+      if (!list.length) return;
+      h += '<details class="tgword" data-tag="' + it.tag + '"' + (openMap[it.tag] ? ' open' : '') + '><summary>'
+        + '<span class="tplname">' + HJ(it.tag) + '</span>'
+        + '<span class="tpcnt">' + list.length + '</span>'
+        + '<span class="tgpath">' + HJ(it.path) + '</span></summary>';
+      h += '<div class="tpbody tpguas">';
+      h += list.map(function (g) {
+        return '<span class="chip' + (typeof cur === 'number' && g.n === cur ? ' on' : '')
+          + '" data-n="' + g.n + '">' + HJ(g.name) + '</span>';
+      }).join('');
+      h += '</div></details>';
+    });
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function tagSetOpen(tag, v) {
+  if (typeof tagOpenMap !== 'object' || !tagOpenMap) tagOpenMap = {};
+  tagOpenMap[tag] = !!v;
+  try { localStorage.setItem('zy.tagopen', JSON.stringify(tagOpenMap)); } catch (e) {}
+}
+
+function bindTag(el) {
+  el.querySelectorAll('.tpi[data-tpy]').forEach(function (b) {
+    b.onclick = function () {
+      const grp = el.querySelector('.tpgrp[data-tpy="' + b.dataset.tpy + '"]');
+      if (!grp) return;
+      grp.querySelectorAll('details.tgword').forEach(function (d) {
+        d.open = true; tagSetOpen(d.dataset.tag, true);
+      });
+      if (grp.scrollIntoView) grp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  });
+  el.querySelectorAll('.tgword .chip[data-n]').forEach(function (c) {
+    c.onclick = function () {
+      const d = c.closest('details.tgword');
+      if (d && d.dataset && d.dataset.tag) tagSetOpen(d.dataset.tag, true);
+      cur = +c.dataset.n;
+      if (typeof resetMv === 'function') resetMv();
+      renderAll();
+    };
+  });
+  el.querySelectorAll('details.tgword[data-tag]').forEach(function (d) {
+    d.ontoggle = function () { tagSetOpen(d.dataset.tag, !!d.open); };
+  });
+}
+
 /* 展开状态持久化：切卦、切视图、刷新都保持（与处境栏同一套做法） */
 function topicSetOpen(id, v) {
   if (typeof topicOpenMap !== 'object' || !topicOpenMap) topicOpenMap = {};
@@ -174,7 +259,7 @@ function bindTopic(el) {
   });
   /* 点具体某一卦：跳卦会重绘侧栏，这里先把从三层到一层的整条链都记成「展开」。
      不能只靠 ontoggle —— details 的 toggle 事件是异步排队的，连续操作时来不及写入。 */
-  el.querySelectorAll('.tpguas .chip[data-n]').forEach(function (c) {
+  el.querySelectorAll('.topicsec .tpguas .chip[data-n]').forEach(function (c) {
     c.onclick = function () {
       let d = c.closest('details');
       while (d) {
