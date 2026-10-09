@@ -73,11 +73,14 @@ body.sideoff .siderail{display:none}
   position:sticky;top:0;background:var(--side);z-index:2}
 .sidetop .seg{flex:1;min-width:0}
 .sidetop .seg button{flex:1;text-align:center;padding:5px 0}
-.minbtn{
+.minbtn,.wbtn{
   flex:0 0 auto;border:1px solid var(--line2);background:transparent;border-radius:4px;
   font-family:inherit;font-size:12px;line-height:1;color:var(--ink3);cursor:pointer;padding:5px 7px;
 }
-.minbtn:hover{border-color:var(--blue);color:var(--blue)}
+.minbtn:hover,.wbtn:hover{border-color:var(--blue);color:var(--blue)}
+.wbtn.on{border-color:var(--blue);color:var(--blue)}
+/* 左栏宽度：手动设定后覆盖一切自动规则 */
+body[data-sidew] aside{width:var(--sidew,250px);flex:0 0 var(--sidew,250px)}
 .gitem{display:flex;align-items:center;gap:9px;padding:6px 14px;cursor:pointer;border-left:3px solid transparent;font-size:14px}
 .gitem:hover{background:var(--hover)}
 .gitem.on{background:var(--sel);border-left-color:var(--red)}
@@ -89,7 +92,7 @@ body.sideoff .siderail{display:none}
 .gcell.on{border-color:var(--red);background:var(--sel)}
 .gcell .nm{font-size:12px;margin-top:3px;line-height:1.2}
 /* 卦阵视图：左栏临时加宽，8×8 横向一次排满，只纵向滚动 */
-body.vgrid aside{width:398px;flex:0 0 398px;overflow-x:hidden}
+body.vgrid:not([data-sidew]) aside{width:398px;flex:0 0 398px;overflow-x:hidden}
 body.vgrid .grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;padding:12px}
 body.vgrid .gcell{padding:7px 2px 5px;overflow:hidden}
 body.vgrid .gcell .tu{margin:0 auto}
@@ -98,9 +101,9 @@ body.vgrid .gcell .tu.sm .y{height:4px}
 body.vgrid .gcell .nm{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 左栏加宽后正文变窄：用法条允许折行，避免整页出现横向滚动 */
 body.vgrid .usebar .u{white-space:normal;overflow-wrap:anywhere}
-@media(max-width:1500px){body.vgrid aside{width:344px;flex:0 0 344px}}
+@media(max-width:1500px){body.vgrid:not([data-sidew]) aside{width:344px;flex:0 0 344px}}
 @media(max-width:1200px){
-  body.vgrid aside{width:302px;flex:0 0 302px}
+  body.vgrid:not([data-sidew]) aside{width:302px;flex:0 0 302px}
   body.vgrid .grid{gap:4px;padding:10px}
   body.vgrid .gcell .nm{font-size:11px}
   body.vgrid .gcell .tu.sm{width:22px}
@@ -596,22 +599,22 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=10"></script>
-<script src="gloss.js?v=10"></script>
-<script src="data.js?v=10"></script>
-<script src="layer.js?v=10"></script>
-<script src="sub.js?v=10"></script>
-<script src="xs.js?v=10"></script>
-<script src="shi.js?v=10"></script>
-<script src="qa.js?v=10"></script>
-<script src="yao_p1.js?v=10"></script>
-<script src="yao_p2.js?v=10"></script>
-<script src="yao_p3.js?v=10"></script>
-<script src="yao_p4.js?v=10"></script>
-<script src="yao_p5.js?v=10"></script>
-<script src="yao_p6.js?v=10"></script>
-<script src="situation.js?v=10"></script>
-<script src="topic.js?v=10"></script>
+<script src="han.js?v=11"></script>
+<script src="gloss.js?v=11"></script>
+<script src="data.js?v=11"></script>
+<script src="layer.js?v=11"></script>
+<script src="sub.js?v=11"></script>
+<script src="xs.js?v=11"></script>
+<script src="shi.js?v=11"></script>
+<script src="qa.js?v=11"></script>
+<script src="yao_p1.js?v=11"></script>
+<script src="yao_p2.js?v=11"></script>
+<script src="yao_p3.js?v=11"></script>
+<script src="yao_p4.js?v=11"></script>
+<script src="yao_p5.js?v=11"></script>
+<script src="yao_p6.js?v=11"></script>
+<script src="situation.js?v=11"></script>
+<script src="topic.js?v=11"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -838,9 +841,73 @@ function gitemHTML(g){
      + '</div>';
 }
 function sideTopHTML(seg){
+  const w = sideWGet();
+  const wt = w ? (w + 'px') : HM('自动');
   return '<div class="sidetop">' + (seg || '<div class="seg"></div>')
+    + '<button class="wbtn' + (w ? ' on' : '') + '" data-w="1" title="'
+    + HM('左栏宽度') + '：' + wt + '｜' + HM('点击换档，也可拖动左栏右边缘；当前档：') + wt + '">⇔</button>'
     + '<button class="minbtn" data-min="1" title="'
     + HM('把目录收成一条窄轨，点窄轨可再展开') + '">«</button></div>';
+}
+/* 左栏宽度：0 = 自动（卦阵视图自动加宽），其余为固定 px */
+const SIDE_W_STEPS = [0, 280, 340, 420, 520];
+function sideWGet(){
+  const v = parseInt(localStorage.getItem('zy.sidew') || '0', 10);
+  return isNaN(v) ? 0 : v;
+}
+function sideWApply(w){
+  w = Math.round(+w || 0);
+  if (!w) {
+    document.body.removeAttribute('data-sidew');
+    document.body.style.removeProperty('--sidew');
+  } else {
+    w = Math.max(220, Math.min(720, w));
+    document.body.setAttribute('data-sidew', '1');
+    document.body.style.setProperty('--sidew', w + 'px');
+  }
+  try { localStorage.setItem('zy.sidew', String(w)); } catch (e) {}
+  const b = document.querySelector('.wbtn[data-w]');
+  if (b) {
+    const t = w ? (w + 'px') : HM('自动');
+    b.classList.toggle('on', !!w);
+    b.title = HM('左栏宽度') + '：' + t + '｜' + HM('点击换档，也可拖动左栏右边缘；当前档：') + t;
+  }
+}
+function sideWStep(){
+  const cur = sideWGet();
+  let i = SIDE_W_STEPS.indexOf(cur);
+  if (i < 0) i = 0;
+  sideWApply(SIDE_W_STEPS[(i + 1) % SIDE_W_STEPS.length]);
+}
+/* 左栏右边缘可拖：距边 6–16px 为拖把区（避开 6px 滚动条） */
+function initSideGrip(){
+  const a = document.getElementById('side');
+  if (!a) return;
+  a.addEventListener('mousemove', function(e){
+    const r = a.getBoundingClientRect();
+    const d = r.right - e.clientX;
+    a.style.cursor = (d >= 6 && d <= 16) ? 'col-resize' : '';
+  });
+  a.addEventListener('mousedown', function(e){
+    const r = a.getBoundingClientRect();
+    const d = r.right - e.clientX;
+    if (d < 6 || d > 16) return;
+    e.preventDefault();
+    const x0 = e.clientX, w0 = r.width;
+    function mv(ev){
+      sideWApply(w0 + ev.clientX - x0);
+      const b = document.querySelector('.wbtn[data-w]');
+      if (b) b.title = HM('左栏宽度') + '：' + Math.round(w0 + ev.clientX - x0) + 'px';
+    }
+    function up(){
+      document.removeEventListener('mousemove', mv);
+      document.removeEventListener('mouseup', up);
+      document.body.style.userSelect = '';
+    }
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', mv);
+    document.addEventListener('mouseup', up);
+  });
 }
 function renderSide(){
   const el = document.getElementById('side');
@@ -893,6 +960,7 @@ function renderSide(){
   }
   el.innerHTML = top + body;
   bindSideMin(el);
+  el.querySelectorAll('.wbtn[data-w]').forEach(function(b){ b.onclick = sideWStep; });
   el.querySelectorAll('#viewSeg button').forEach(function(b){
     b.onclick = function(){ view = b.dataset.v; renderSide(); };
   });
@@ -1710,6 +1778,8 @@ function initAI(){
     document.getElementById('aiTog').onclick   = function(){ aiToggle(); };
     document.body.classList.toggle('sideoff', !sideOn);
     document.body.classList.toggle('sidecollapse', localStorage.getItem('zy.sidecol') === '1');
+    sideWApply(sideWGet());   /* 左栏宽度：上次设定的档位 */
+    initSideGrip();
     document.body.classList.toggle('aioff', !aiOn);
     syncTog();
 
