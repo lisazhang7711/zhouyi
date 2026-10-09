@@ -859,6 +859,10 @@ function renderSide(){
   el.querySelectorAll('.gcell,.gitem,.chip[data-n],.shiitem[data-n]').forEach(function(c){
     c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
   });
+  /* 〔史〕通论条目（如伏羲画卦、文王演易）不对应具体卦，点它给个提示而不是静默无响应 */
+  el.querySelectorAll('.shiitem:not([data-n])').forEach(function(c){
+    c.onclick = function(){ toast(HM('此条为通论，不对应具体卦')); };
+  });
   /* 〔境〕处境卡点击：跳到该卦，并定位到建议首读的那一爻。
      跳卦会重绘侧栏，这里先把所属处境记成「展开」，重绘后它就不会收起 */
   el.querySelectorAll('.siturow[data-n]').forEach(function(c){
@@ -1424,12 +1428,19 @@ document.addEventListener('click', function(e){
 
 /* ---------------- 顶栏与初始化 ---------------- */
 const MODE_LABEL = {'both':'文白对照','yuan':'仅原文','bai':'仅今译'};
+/* 顶栏其余硬编码文案也统一走 HM()，切到繁体模式时才跟着变 */
+const ZI_LABEL = {'1':'字注 开','0':'字注 关'};
+const THEME_LABEL = {'day':'☀ 日间','night':'☾ 夜间'};
 function applyScriptUI(){
   document.querySelectorAll('#scriptSeg button').forEach(function(b){
     b.classList.toggle('on', b.dataset.s === SCRIPT);
   });
   document.querySelectorAll('#ziSeg button').forEach(function(b){
     b.classList.toggle('on', (b.dataset.z === '1') === ziOn);
+    if (ZI_LABEL[b.dataset.z]) b.textContent = HM(ZI_LABEL[b.dataset.z]);
+  });
+  document.querySelectorAll('#themeSeg button').forEach(function(b){
+    if (THEME_LABEL[b.dataset.t]) b.textContent = HM(THEME_LABEL[b.dataset.t]);
   });
   document.querySelectorAll('#modeSeg button').forEach(function(b){
     b.textContent = HM(MODE_LABEL[b.dataset.m]);
@@ -1449,7 +1460,12 @@ function jumpYao(yt){
     setTimeout(function(){ t.classList.remove('hit'); }, 2600);
   }, 80);
 }
-function renderAll(){ renderSide(); renderMain(); }
+/* 当前卦写进 URL hash：刷新后仍在原卦，链接也能直接分享到某一卦 */
+function syncHash(){
+  try { history.replaceState(null, '', '#' + cur); }
+  catch(e){ location.hash = cur; }
+}
+function renderAll(){ syncHash(); renderSide(); renderMain(); }
 
 document.getElementById('scriptSeg').onclick = function(e){
   const b = e.target.closest('button'); if (!b) return;
@@ -1480,8 +1496,17 @@ document.getElementById('q').oninput = function(){
   const el = document.getElementById('side');
   if (!k) { renderSide(); return; }
   const hit = G.filter(function(g){
-    return [g.name, g.full, String(g.n), g.ci, g.tags.join(',')].some(function(s){
-      return s.indexOf(k) >= 0 || HJ(s).indexOf(k) >= 0;
+    /* 卦名 / 全称 / 序号 / 卦辞 / 标签 + 本卦逐爻「t=爻题 c=爻辞 m=今译 x=小象 z=注释」一并纳入检索，
+       这样搜「潜龙」「亢龙」这类只出现在爻辞里的词也能命中对应卦 */
+    const base = [g.name, g.full, String(g.n), g.ci, g.tags.join(',')];
+    (YAO[g.n] || []).forEach(function(y){
+      base.push(y.t || '', y.c || '', y.m || '', y.x || '');
+      (y.z || []).forEach(function(p){ base.push(p[0] || '', p[1] || ''); });
+    });
+    return base.some(function(s){
+      s = String(s);
+      return s.indexOf(k) >= 0 || t2s(s).indexOf(k) >= 0
+          || s2t(s).indexOf(k) >= 0 || s2tm(s).indexOf(k) >= 0;
     });
   });
   let body = hit.map(gitemHTML).join('');
@@ -1680,6 +1705,15 @@ function initAI(){
 applyTheme();
 buildGloss();
 applyScriptUI();
+/* 刷新 / 直接打开带 hash 的链接时恢复到对应卦（繁简、主题、字注已在上方 localStorage 恢复） */
+(function(){
+  const h = parseInt(String(location.hash || '').replace('#', ''), 10);
+  if (h >= 1 && h <= 64 && gua(h)) cur = h;
+})();
+window.addEventListener('hashchange', function(){
+  const h = parseInt(String(location.hash || '').replace('#', ''), 10);
+  if (h >= 1 && h <= 64 && gua(h) && h !== cur) { cur = h; resetMv(); renderAll(); }
+});
 renderAll();
 initAI();
 </script>
