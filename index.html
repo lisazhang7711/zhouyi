@@ -81,6 +81,8 @@ body.sideoff .siderail{display:none}
 .wbtn.on{border-color:var(--blue);color:var(--blue)}
 /* 左栏宽度：手动设定后覆盖一切自动规则 */
 body[data-sidew] aside{width:var(--sidew,250px);flex:0 0 var(--sidew,250px)}
+/* 正文宽度：0 = 标准 920px，9999 = 充满可用宽度 */
+body[data-mainw] main{max-width:var(--mainw,920px)}
 .gitem{display:flex;align-items:center;gap:9px;padding:6px 14px;cursor:pointer;border-left:3px solid transparent;font-size:14px}
 .gitem:hover{background:var(--hover)}
 .gitem.on{background:var(--sel);border-left-color:var(--red)}
@@ -341,7 +343,7 @@ main{flex:1 1 auto;min-width:0;padding:22px 30px 90px;max-width:920px;margin:0 a
   background:var(--side);border:1px solid var(--line);border-radius:8px;
   padding:9px 14px;margin-bottom:14px;font-size:12px;color:var(--ink2);line-height:1.75;
 }
-.usebar .u{white-space:nowrap}
+.usebar .u{white-space:normal;overflow-wrap:anywhere}
 .usebar b{color:var(--ink);font-weight:600}
 .usebar .cp{color:var(--blue)}
 .legend{font-size:12px;color:var(--ink3);line-height:2;margin-top:10px;border-top:1px dotted var(--line2);padding-top:8px}
@@ -532,8 +534,6 @@ body.aioff #ai{display:none}
 .ycard.hit{box-shadow:0 0 0 2px var(--red) inset;border-radius:4px}
 
 </style>
-<link rel="stylesheet" href="mode.css?v=1">
-<script>try{var _m=localStorage.getItem("zy.viewmode");if(_m==="mobile"||_m==="desktop")document.documentElement.classList.add("mode-"+_m);}catch(e){}</script>
 </head>
 <body>
 
@@ -557,6 +557,7 @@ body.aioff #ai{display:none}
     <button data-t="day" class="on">☀ 日间</button>
     <button data-t="night">☾ 夜间</button>
   </div>
+  <button class="tbtn" id="mainWBtn" title="">⇔ <span id="mainWVal">标准</span></button>
   <button class="tbtn on" id="sideTog" title="显示或隐藏左侧目录">☰ 目录</button>
   <button class="tbtn on" id="aiTog" title="显示或隐藏右侧小助手">助手</button>
 </header>
@@ -601,22 +602,22 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=12"></script>
-<script src="gloss.js?v=12"></script>
-<script src="data.js?v=12"></script>
-<script src="layer.js?v=12"></script>
-<script src="sub.js?v=12"></script>
-<script src="xs.js?v=12"></script>
-<script src="shi.js?v=12"></script>
-<script src="qa.js?v=12"></script>
-<script src="yao_p1.js?v=12"></script>
-<script src="yao_p2.js?v=12"></script>
-<script src="yao_p3.js?v=12"></script>
-<script src="yao_p4.js?v=12"></script>
-<script src="yao_p5.js?v=12"></script>
-<script src="yao_p6.js?v=12"></script>
-<script src="situation.js?v=12"></script>
-<script src="topic.js?v=12"></script>
+<script src="han.js?v=13"></script>
+<script src="gloss.js?v=13"></script>
+<script src="data.js?v=13"></script>
+<script src="layer.js?v=13"></script>
+<script src="sub.js?v=13"></script>
+<script src="xs.js?v=13"></script>
+<script src="shi.js?v=13"></script>
+<script src="qa.js?v=13"></script>
+<script src="yao_p1.js?v=13"></script>
+<script src="yao_p2.js?v=13"></script>
+<script src="yao_p3.js?v=13"></script>
+<script src="yao_p4.js?v=13"></script>
+<script src="yao_p5.js?v=13"></script>
+<script src="yao_p6.js?v=13"></script>
+<script src="situation.js?v=13"></script>
+<script src="topic.js?v=13"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -889,6 +890,49 @@ function sideWStep(){
   let i = SIDE_W_STEPS.indexOf(cur);
   if (i < 0) i = 0;
   sideWApply(SIDE_W_STEPS[(i + 1) % SIDE_W_STEPS.length]);
+}
+/* 正文宽度：0 = 标准（920px，沿用默认），9999 = 充满可用宽度 */
+const MAIN_W_STEPS = [0, 680, 820, 1100, 1320, 9999];
+function mainWLabel(w){
+  w = Math.round(+w || 0);
+  if (!w) return HM('标准');
+  if (w >= 9999) return HM('充满');
+  return w + 'px';
+}
+function mainWGet(){
+  const v = parseInt(localStorage.getItem('zy.mainw') || '0', 10);
+  return isNaN(v) ? 0 : v;
+}
+function mainWApply(w){
+  w = Math.round(+w || 0);
+  if (!w) {
+    document.body.removeAttribute('data-mainw');
+    document.body.style.removeProperty('--mainw');
+  } else {
+    w = Math.max(480, Math.min(9999, w));
+    document.body.setAttribute('data-mainw', '1');
+    document.body.style.setProperty('--mainw', (w >= 9999 ? 'none' : w + 'px'));
+  }
+  try { localStorage.setItem('zy.mainw', String(w)); } catch (e) {}
+  const b = document.getElementById('mainWBtn');
+  const v = document.getElementById('mainWVal');
+  if (b) {
+    if (v) v.textContent = mainWLabel(w);
+    b.classList.toggle('on', !!w);
+    const mn = document.getElementById('main');
+    const real = mn ? Math.round(mn.getBoundingClientRect().width) : 0;
+    const lim = (w && w < 9999 && real > 0 && real < w - 2)
+      ? '｜' + HM('当前窗口只放得下') + ' ' + real + 'px' : '';
+    b.title = HM('正文栏宽') + '：' + mainWLabel(w)
+      + (w ? '（' + HM('实际') + ' ' + real + 'px）' : '') + '｜'
+      + HM('点击换档，宽度会记住；当前档：') + mainWLabel(w) + lim;
+  }
+}
+function mainWStep(){
+  const cur = mainWGet();
+  let i = MAIN_W_STEPS.indexOf(cur);
+  if (i < 0) i = 0;
+  mainWApply(MAIN_W_STEPS[(i + 1) % MAIN_W_STEPS.length]);
 }
 /* 左栏右边缘可拖：距边 6–16px 为拖把区（避开 6px 滚动条） */
 function initSideGrip(){
@@ -1790,6 +1834,9 @@ function initAI(){
     document.body.classList.toggle('sideoff', !sideOn);
     document.body.classList.toggle('sidecollapse', localStorage.getItem('zy.sidecol') === '1');
     sideWApply(sideWGet());   /* 左栏宽度：上次设定的档位 */
+    mainWApply(mainWGet());   /* 正文宽度：上次设定的档位 */
+    const mb = document.getElementById('mainWBtn');
+    if (mb) mb.onclick = mainWStep;
     initSideGrip();
     document.body.classList.toggle('aioff', !aiOn);
     syncTog();
@@ -1805,6 +1852,5 @@ applyScriptUI();
 renderAll();
 initAI();
 </script>
-<script src="mode.js?v=1"></script>
 </body>
 </html>
