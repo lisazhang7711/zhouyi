@@ -103,14 +103,15 @@ function situHTML() {
     h += '<div class="situbody">';
     s.gua.forEach(function (g) {
       const gu = gua(g.n);
-      const cj = (typeof chujingOf === 'function') ? chujingOf(g.n) : null;
+      const cj = (typeof chujingOf === 'function') ? chujingOf(gu) : null;
       h += '<div class="siturow" data-n="' + g.n + '" data-y="' + HJ(g.y) + '">';
       h += '<div class="situnm">' + HJ(gu.name) + '<span class="situy">' + HM('先读 ' + g.y) + '</span></div>';
       h += '<div class="situwhy">' + HM(g.why) + '</div>';
-      if (cj && cj.sit) {
-        h += '<div class="situcj"><span class="k">' + HM('处境') + '</span>' + HM(cj.sit) + '</div>';
-        h += '<div class="situok"><span class="k ok">' + HM('宜') + '</span>' + HM(cj.ok || '') +
-             '<span class="k no">' + HM('忌') + '</span>' + HM(cj.no || '') + '</div>';
+      const sitText = (cj && cj.sit && !/undefined|NaN|\[object Object\]/.test(String(cj.sit))) ? cj.sit : '此卦处境暂缺';
+      if (cj) {
+        h += '<div class="situcj"><span class="k">' + HM('处境') + '</span>' + HM(sitText) + '</div>';
+        h += '<div class="situok"><span class="k ok">' + HM('宜') + '</span>' + HM(cj.ok || '审时度势') +
+             '<span class="k no">' + HM('忌') + '</span>' + HM(cj.no || '轻举妄动') + '</div>';
       }
       h += '</div>';
     });
