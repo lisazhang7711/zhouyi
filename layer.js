@@ -249,10 +249,15 @@ function lidaiOf(g){
   };
 }
 function chujingOf(g){
+  /* 容错：允许直接传卦号；任何字段取不到都不回 undefined 字符串 */
+  if (typeof g === 'number' && typeof GUA !== 'undefined') g = GUA[g - 1];
+  if (!g || !g.down) return { gen:true, sit:'此卦处境暂缺', judge:'—', ok:'—', no:'—' };
   if (CHUJING_MANUAL[g.n]) return Object.assign({gen:false}, CHUJING_MANUAL[g.n]);
-  const d = DE[g.down], u = DE[g.up], a = ADVICE[g.up] || ['审时度势', '轻举妄动'];
+  const d = DE[g.down], u = DE[g.up], xd = XIANG8[g.down], xu = XIANG8[g.up],
+        a = ADVICE[g.up] || ['审时度势', '轻举妄动'];
+  if (!d || !u || !xd || !xu) return { gen:true, sit:'此卦处境暂缺', judge:'—', ok:a[0], no:a[1] };
   return { gen:true,
-    sit: '内' + d + '而外' + u + '：以' + XIANG8[g.down] + '为体，遇' + XIANG8[g.up] + '之境。',
+    sit: '内' + d + '而外' + u + '：以' + xd + '为体，遇' + xu + '之境。',
     judge: '下卦主内主始，上卦主外主成。此卦以' + d + '为体、以' + u + '为用。',
     ok: a[0], no: a[1]
   };
