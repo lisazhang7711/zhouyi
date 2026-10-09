@@ -77,5 +77,8 @@ const s2t  = function (s) { return conv(s, S2T_MAP); };    /* 簡 → 繁（經�
 const s2tm = function (s) { return conv(s, S2T_M_MAP); };  /* 簡 → 繁（今譯／註釋／介面用） */
 
 let SCRIPT = 'simp';                       /* 'simp' | 'trad' */
-function HJ(s) { return SCRIPT === 'trad' ? s2t(String(s))  : t2s(String(s)); }  /* 經文 */
-function HM(s) { return SCRIPT === 'trad' ? s2tm(String(s)) : t2s(String(s)); }  /* 今譯／註釋／介面 */
+/* 空值一律回空串：绝不把 undefined / null 印成字面量。
+   注意：只挡「直接传空值」这一类；字符串拼接里已生成的 "…undefined…" 不在此抹掉，
+   否则会掩盖 bug——那一类交给 _raw/checkundef.js 全量扫描去抓。 */
+function HJ(s) { if (s == null) return ''; s = String(s); return SCRIPT === 'trad' ? s2t(s)  : t2s(s); }  /* 經文 */
+function HM(s) { if (s == null) return ''; s = String(s); return SCRIPT === 'trad' ? s2tm(s) : t2s(s); }  /* 今譯／註釋／介面 */
