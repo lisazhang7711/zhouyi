@@ -97,14 +97,16 @@ function situOf(n) {
 function situHTML() {
   let h = '<div class="situsec">';
   h += '<div class="situtip">' + HM('先选你现在的处境，再看对应的卦。不用先想「我要读哪一卦」。') + '</div>';
+  const openMap = (typeof situOpenMap === 'object' && situOpenMap) ? situOpenMap : {};
   SITUATIONS.forEach(function (s) {
-    h += '<details class="situcard" data-situ="' + s.id + '"><summary>';
+    h += '<details class="situcard" data-situ="' + s.id + '"' + (openMap[s.id] ? ' open' : '') + '><summary>';
     h += '<b>' + HM(s.name) + '</b><span class="situask">' + HM(s.ask) + '</span></summary>';
     h += '<div class="situbody">';
     s.gua.forEach(function (g) {
       const gu = gua(g.n);
       const cj = (typeof chujingOf === 'function') ? chujingOf(gu) : null;
-      h += '<div class="siturow" data-n="' + g.n + '" data-y="' + HJ(g.y) + '">';
+      h += '<div class="siturow' + (typeof cur === 'number' && cur === g.n ? ' on' : '')
+        + '" data-n="' + g.n + '" data-y="' + HJ(g.y) + '">';
       h += '<div class="situnm">' + HJ(gu.name) + '<span class="situy">' + HM('先读 ' + g.y) + '</span></div>';
       h += '<div class="situwhy">' + HM(g.why) + '</div>';
       const sitText = (cj && cj.sit && !/undefined|NaN|\[object Object\]/.test(String(cj.sit))) ? cj.sit : '此卦处境暂缺';
