@@ -453,6 +453,35 @@ body.aioff #ai{display:none}
 .situsec{padding:6px 14px 16px}
 .situtip{font-size:11.5px;color:var(--ink3);line-height:1.9;padding:2px 0 10px;border-bottom:1px dotted var(--line2);margin-bottom:6px}
 .situcard{border-bottom:1px dotted var(--line2)}
+/* 〔主〕三级主题索引：一层大话题 → 二层面向 → 三层词 → 卦 */
+.topicsec{padding:4px 14px 16px}
+.topicidx{display:flex;flex-wrap:wrap;gap:2px;padding:8px 0 7px;position:sticky;top:0;background:var(--side);z-index:2;border-bottom:1px solid var(--line2)}
+.tpi{font-size:11px;color:var(--ink2);border:1px solid var(--line2);border-radius:3px;min-width:19px;text-align:center;padding:1px 3px;cursor:pointer;font-family:var(--mono,monospace)}
+.tpi:hover{border-color:var(--red);color:var(--red);background:var(--sel)}
+.tpi.off{color:var(--ink3);opacity:.35;cursor:default}
+.tpi.off:hover{border-color:var(--line2);color:var(--ink3);background:none}
+.topictip{font-size:11.5px;color:var(--ink3);line-height:1.8;padding:8px 0 4px}
+.tpplet{font-size:11px;color:var(--ink3);font-family:var(--mono,monospace);letter-spacing:2px;padding:9px 0 2px;border-bottom:1px dotted var(--line2);margin-bottom:2px}
+.tpcard,.tpsub,.tpleaf{border-bottom:1px dotted var(--line2)}
+.tpcard>summary,.tpsub>summary,.tpleaf>summary{cursor:pointer;list-style:none;display:block}
+.tpcard>summary::-webkit-details-marker,.tpsub>summary::-webkit-details-marker,.tpleaf>summary::-webkit-details-marker{display:none}
+.tpcard>summary{padding:9px 0 8px}
+.tpcard>summary b{font-size:13px;color:var(--ink);font-weight:600}
+.tpcard>summary b::before{content:'\25B8 ';color:var(--ink3);font-size:10px}
+.tpcard[open]>summary b::before{content:'\25BE ';color:var(--red)}
+.tpnote{display:block;font-size:11px;color:var(--ink3);line-height:1.7;margin-top:2px}
+.tpcnt{font-size:10.5px;color:var(--ink3);border:1px solid var(--line2);border-radius:9px;padding:0 6px;margin-left:7px;font-weight:400}
+.tpbody{padding:2px 0 4px 12px;border-left:1px solid var(--line2);margin-left:3px}
+.tpsub>summary{padding:6px 0}
+.tpsub>summary b{font-size:12.5px;color:var(--ink2);font-weight:600}
+.tpsub>summary b::before{content:'\25B8 ';color:var(--ink3);font-size:9px}
+.tpsub[open]>summary b::before{content:'\25BE ';color:var(--red)}
+.tpleaf>summary{padding:5px 0 5px 2px}
+.tplname{font-size:12.5px;color:var(--ink2)}
+.tpleaf>summary .tplname::before{content:'\25B8 ';color:var(--ink3);font-size:9px}
+.tpleaf[open]>summary .tplname::before{content:'\25BE ';color:var(--red)}
+.tpleaf>summary:hover .tplname{color:var(--red)}
+.tpguas{padding:5px 0 8px 12px}
 .situcard summary{cursor:pointer;padding:9px 0 8px;list-style:none;display:block}
 .situcard summary::-webkit-details-marker{display:none}
 .situcard summary b{font-size:13px;color:var(--ink);font-weight:600}
@@ -540,21 +569,22 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=5"></script>
-<script src="gloss.js?v=5"></script>
-<script src="data.js?v=5"></script>
-<script src="layer.js?v=5"></script>
-<script src="sub.js?v=5"></script>
-<script src="xs.js?v=5"></script>
-<script src="shi.js?v=5"></script>
-<script src="qa.js?v=5"></script>
-<script src="yao_p1.js?v=5"></script>
-<script src="yao_p2.js?v=5"></script>
-<script src="yao_p3.js?v=5"></script>
-<script src="yao_p4.js?v=5"></script>
-<script src="yao_p5.js?v=5"></script>
-<script src="yao_p6.js?v=5"></script>
-<script src="situation.js?v=5"></script>
+<script src="han.js?v=6"></script>
+<script src="gloss.js?v=6"></script>
+<script src="data.js?v=6"></script>
+<script src="layer.js?v=6"></script>
+<script src="sub.js?v=6"></script>
+<script src="xs.js?v=6"></script>
+<script src="shi.js?v=6"></script>
+<script src="qa.js?v=6"></script>
+<script src="yao_p1.js?v=6"></script>
+<script src="yao_p2.js?v=6"></script>
+<script src="yao_p3.js?v=6"></script>
+<script src="yao_p4.js?v=6"></script>
+<script src="yao_p5.js?v=6"></script>
+<script src="yao_p6.js?v=6"></script>
+<script src="situation.js?v=6"></script>
+<script src="topic.js?v=6"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -599,6 +629,11 @@ function situSetOpen(id, on){
   if (on) situOpenMap[id] = true; else delete situOpenMap[id];
   try { localStorage.setItem('zy.situopen', JSON.stringify(situOpenMap)); } catch(e){}
 }
+/* 〔主〕主题树展开状态：键为节点 id（一层 / 一层-序号 / 一层-序号-词） */
+let topicOpenMap = {};
+try {
+  const to = localStorage.getItem('zy.topicopen'); if (to) topicOpenMap = JSON.parse(to) || {};
+} catch(e){}
 try {
   const s = localStorage.getItem('zy.script'); if (s) SCRIPT = s;
   const z = localStorage.getItem('zy.zi');     if (z !== null) ziOn = z === '1';
@@ -795,16 +830,9 @@ function renderSide(){
     });
     body += '</div>';
   } else if (view === 'tag') {
-    body = '<div class="tagsec">';
-    TAGS.slice().sort().forEach(function(t){
-      const list = G.filter(function(g){ return g.tags.indexOf(t) >= 0; });
-      if (!list.length) return;
-      body += '<h4>' + HJ(t) + '</h4>';
-      list.forEach(function(g){
-        body += '<span class="chip' + (g.n===cur?' on':'') + '" data-n="' + g.n + '">' + HJ(g.name) + '</span>';
-      });
-    });
-    body += '</div>';
+    body = (typeof topicHTML === 'function')
+      ? topicHTML()
+      : '<div class="favempty">' + HM('主题索引未加载。') + '</div>';
   } else if (view === 'sit') {
     body = (typeof situHTML === 'function') ? situHTML() : '<div class="favempty">' + HM('处境索引未加载。') + '</div>';
   } else if (view === 'shi') {
@@ -844,6 +872,8 @@ function renderSide(){
   el.querySelectorAll('.situcard[data-situ]').forEach(function(d){
     d.ontoggle = function(){ situSetOpen(d.dataset.situ, !!d.open); };
   });
+  /* 〔主〕主题树：索引字母点一下展开该字母下所有大话题；各层展开状态同样记下来 */
+  if (typeof bindTopic === 'function') bindTopic(el);
   el.querySelectorAll('.fitem').forEach(function(c){
     c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); window.scrollTo({top:0,behavior:'smooth'}); };
   });
@@ -1154,7 +1184,8 @@ function renderMain(){
     + '<span class="wx-dot" style="background:' + cU + '"></span>' + HM(WUXING[g.up])
     + '</div>'
     + '<div class="full">' + g.tags.map(function(t){
-        return '<span class="chip" data-tag="' + t + '">' + HJ(t) + '</span>'; }).join('')
+        const tp = (typeof topicTitle === 'function') ? HJ(topicTitle(t)) : '';
+        return '<span class="chip" data-tag="' + t + '"' + (tp ? ' title="' + tp + '"' : '') + '>' + HJ(t) + '</span>'; }).join('')
     + '</div>'
     + layerRowHTML()
     + '</div></div>';
