@@ -599,22 +599,22 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=11"></script>
-<script src="gloss.js?v=11"></script>
-<script src="data.js?v=11"></script>
-<script src="layer.js?v=11"></script>
-<script src="sub.js?v=11"></script>
-<script src="xs.js?v=11"></script>
-<script src="shi.js?v=11"></script>
-<script src="qa.js?v=11"></script>
-<script src="yao_p1.js?v=11"></script>
-<script src="yao_p2.js?v=11"></script>
-<script src="yao_p3.js?v=11"></script>
-<script src="yao_p4.js?v=11"></script>
-<script src="yao_p5.js?v=11"></script>
-<script src="yao_p6.js?v=11"></script>
-<script src="situation.js?v=11"></script>
-<script src="topic.js?v=11"></script>
+<script src="han.js?v=12"></script>
+<script src="gloss.js?v=12"></script>
+<script src="data.js?v=12"></script>
+<script src="layer.js?v=12"></script>
+<script src="sub.js?v=12"></script>
+<script src="xs.js?v=12"></script>
+<script src="shi.js?v=12"></script>
+<script src="qa.js?v=12"></script>
+<script src="yao_p1.js?v=12"></script>
+<script src="yao_p2.js?v=12"></script>
+<script src="yao_p3.js?v=12"></script>
+<script src="yao_p4.js?v=12"></script>
+<script src="yao_p5.js?v=12"></script>
+<script src="yao_p6.js?v=12"></script>
+<script src="situation.js?v=12"></script>
+<script src="topic.js?v=12"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -809,6 +809,15 @@ function annotate(text){
   const t = HJ(text);
   if (!ziOn || !GLOSS_RE) return esc(t);
   return esc(t).replace(GLOSS_RE, function(m){
+    return '<span class="kw" data-k="' + esc(m) + '">' + m + '</span>';
+  });
+}
+/* 今译逐词注：今译是白话，用另一套索引（HM 通道）匹配，
+   这样「涉大川」的译文「渡过大河」也能点开同一条释义 */
+function annotateM(text){
+  const t = HM(text);
+  if (!ziOn || !GLOSS_RE_M) return esc(t);
+  return esc(t).replace(GLOSS_RE_M, function(m){
     return '<span class="kw" data-k="' + esc(m) + '">' + m + '</span>';
   });
 }
@@ -1117,7 +1126,7 @@ function panelChuan(g, sents, sidx){
       + snumHTML(k, sidx[k], tot) + '<h3>' + title + '</h3>'
       + cbtns(HJ(yuan), HM(bai), head, k) + '</div>'
       + '<div class="yuan">' + annotate(yuan) + '</div>'
-      + '<div class="bai">' + HM(bai) + '</div>'
+      + '<div class="bai">' + annotateM(bai) + '</div>'
       + subBlockHTML(g, 'chuan', ck) + '</div>';
   }
   const xu = XUGUA[g.n], za = ZAGUA[g.n], wy = WENYAN[g.n];
@@ -1168,7 +1177,7 @@ function panelZi(g){
   items.forEach(function(x){
     h += '<div class="hj"><span class="hjsrc">' + HJ(x.src) + '</span>'
       + '<div class="yuan">' + annotate(x.t) + '</div>'
-      + '<div class="bai">' + HM(x.m) + '</div>'
+      + '<div class="bai">' + annotateM(x.m) + '</div>'
       + '<div class="hjlink">' + (x.gua.length
           ? x.gua.map(function(n){ return '<span class="chip" data-n="' + n + '">' + HJ(gua(n).name) + '</span>'; }).join('')
           : '<span class="hjall">' + HM('通论 · 不专属某一卦') + '</span>')
@@ -1264,7 +1273,7 @@ function subBoxBody(g, which, kind, i){
   items.forEach(function(x){
     s += '<div class="hj"><span class="hjsrc">' + HJ(x.src) + '</span>'
       + '<div class="yuan">' + annotate(x.t) + '</div>'
-      + '<div class="bai">' + HM(x.m) + '</div>'
+      + '<div class="bai">' + annotateM(x.m) + '</div>'
       + '<div class="hjlink">' + (x.gua.length
           ? x.gua.map(function(n){ return '<span class="chip" data-n="' + n + '">' + HJ(gua(n).name) + '</span>'; }).join('')
           : '<span class="hjall">' + HM('通论 · 不专属某一卦') + '</span>')
@@ -1348,7 +1357,7 @@ function renderMain(){
     + snumHTML(cur + ':ci', 0, sents.length) + '<h3>' + HM('卦辞') + '</h3>'
     + cbtns(HJ(g.ci), HM(g.ciM), head1, cur + ':ci') + '</div>';
   if (mode !== 'bai')  h += '<div class="yuan">' + annotate(g.ci) + '</div>';
-  if (mode !== 'yuan') h += '<div class="bai">' + HM(g.ciM) + '</div>';
+  if (mode !== 'yuan') h += '<div class="bai">' + annotateM(g.ciM) + '</div>';
   h += subBlockHTML(g, 'ci', 0);
   h += '</div>';
 
@@ -1357,7 +1366,7 @@ function renderMain(){
     + snumHTML(cur + ':xiang', 1, sents.length) + '<h3>' + HM('大象传') + '</h3>'
     + cbtns(HJ(g.xiang), HM(g.xiangM), head2, cur + ':xiang') + '</div>';
   if (mode !== 'bai')  h += '<div class="yuan">' + annotate(g.xiang) + '</div>';
-  if (mode !== 'yuan') h += '<div class="bai">' + HM(g.xiangM) + '</div>';
+  if (mode !== 'yuan') h += '<div class="bai">' + annotateM(g.xiangM) + '</div>';
   h += subBlockHTML(g, 'xiang', 0);
   h += '</div>';
 
@@ -1373,7 +1382,7 @@ function renderMain(){
         + '<h3>' + HJ(y.t) + '</h3>'
         + cbtns(HJ(y.c), HM(y.m), head, cur + ':y' + i) + '</div>';
       if (mode !== 'bai') h += '<div class="yuan" style="font-size:16px">' + annotate(y.c) + '</div>';
-      if (mode !== 'yuan') h += '<div class="bai">' + HM(y.m) + '</div>';
+      if (mode !== 'yuan') h += '<div class="bai">' + annotateM(y.m) + '</div>';
       if (mode !== 'bai' && y.x) h += '<div class="xiao">' + annotate(y.x) + '</div>';
       if (y.z && y.z.length && mode !== 'yuan') {
         h += '<div class="zi">' + y.z.map(function(z){
@@ -1506,7 +1515,7 @@ function bindKw(root){
   root.querySelectorAll('.kw').forEach(function(k){
     k.onclick = function(e){
       e.stopPropagation();
-      const key = k.dataset.k, def = GLOSS_MAP[key];
+      const key = k.dataset.k, def = GLOSS_MAP[key] || GLOSS_MAP_M[key];
       if (!def) return;
       const was = k.classList.contains('on');
       root.querySelectorAll('.kw.on').forEach(function(x){ x.classList.remove('on'); });
