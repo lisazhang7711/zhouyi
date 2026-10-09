@@ -251,9 +251,27 @@ const GLOSS_RAW = [
 ];
 
 /* 依目前字形重建索引：鍵長者優先，避免「无咎」被「咎」吃掉
- * 鍵是經文用字走 HJ，釋文是自研簡體走 HM */
+ * 鍵是經文用字走 HJ，釋文是自研簡體走 HM
+ * 另建一套「今譯通道」索引 GLOSS_MAP_M / GLOSS_RE_M：
+ * 今譯是白話，字面與經文不同（如「涉大川」譯作「渡過大河」），
+ * 故今譯鍵 = HM(原鍵) + 釋文首段（第一個標點前的純漢字短語）。 */
 let GLOSS_MAP = {};
 let GLOSS_RE = null;
+let GLOSS_MAP_M = {};
+let GLOSS_RE_M = null;
+/* 今譯索引要排除的虛詞／泛用字（單字才排除，多音節詞不受影響），
+   否則譯文會被「的、是、大、上」之類劃得滿屏都是 */
+const GLOSS_STOP = {};
+('的了是一不我在有他这那们来上下中大小也都很就而要会能对着与其若所如之为以于则且者乎焉哉矣'
+ + '故乃斯凡及至由从向被把让使此彼何谁孰安奚兮盖夫惟唯唯盖曰谓之之作乎哉耳焉尔'
+).split('').forEach(function (c) { GLOSS_STOP[c] = 1; });
+
+function mkRe(keys){
+  if (!keys.length) return null;
+  return new RegExp('(' + keys.map(function (k) {
+    return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }).join('|') + ')', 'g');
+}
 function buildGloss() {
   const arr = GLOSS_RAW
     .map(function (p) { return [HJ(p[0]), HM(p[1])]; })
@@ -262,8 +280,29 @@ function buildGloss() {
   const seen = {};
   GLOSS_MAP = {};
   arr.forEach(function (p) { if (!seen[p[0]]) { seen[p[0]] = 1; GLOSS_MAP[p[0]] = p[1]; } });
-  const keys = Object.keys(GLOSS_MAP);
-  GLOSS_RE = new RegExp('(' + keys.map(function (k) {
-    return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }).join('|') + ')', 'g');
+  GLOSS_RE = mkRe(Object.keys(GLOSS_MAP));
+
+  /* 今譯索引：長鍵優先 */
+  const cand = {};
+  GLOSS_RAW.forEach(function (p) {
+    const def = HM(p[1]);
+    if (!def) return;
+    const kM = HM(p[0]);
+    if (kM) cand[kM] = def;
+    /* 釋文首段（第一個句號/分號前）再按 、， 拆成若干白話對應詞：
+       如「貞」釋「正、固。」→ 收「正」「固」，譯文「正固」即可點開 */
+    const seg = String(p[1]).split(/[。；;！？!?（(]/)[0] || '';
+    seg.split(/[、，,：:「」『』"']/).forEach(function (pt) {
+      const cut = pt.replace(/[（）()《》<>]/g, '').trim();
+      if (!/^[\u4e00-\u9fa5]+$/.test(cut)) return;
+      if (cut.length > 6) return;
+      if (cut.length === 1 && GLOSS_STOP[cut]) return;   /* 排除「的/是/大」这类虚词泛字 */
+      const kH = HM(cut);
+      if (kH && !cand[kH]) cand[kH] = def;
+    });
+  });
+  const keysM = Object.keys(cand).sort(function (a, b) { return b.length - a.length; });
+  GLOSS_MAP_M = {};
+  keysM.forEach(function (k) { GLOSS_MAP_M[k] = cand[k]; });
+  GLOSS_RE_M = mkRe(keysM);
 }
