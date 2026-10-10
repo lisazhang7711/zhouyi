@@ -108,6 +108,19 @@
     return null;
   }
 
+  function openGate() {
+    var now = cur();
+    Array.prototype.forEach.call(gate.querySelectorAll('.mg-card'), function (b) {
+      b.classList.toggle('cur', b.getAttribute('data-m') === now);
+    });
+    var c = $('mgCancel');
+    if (c) {
+      c.hidden = !now;
+      c.textContent = now ? '继续' + MODE_NAME[now] : '暂不选择';
+    }
+    gate.hidden = false;
+  }
+
   function apply(m) {
     root.classList.remove('mode-mobile', 'mode-desktop', 'm-portrait', 'm-landscape');
     if (m === 'desktop') root.classList.add('mode-desktop');
@@ -139,17 +152,6 @@
     return v;
   }
 
-  function openGate() {
-    var now = cur();
-    Array.prototype.forEach.call(gate.querySelectorAll('.mg-card'), function (b) {
-      if (b.getAttribute('data-m') === now) b.classList.add('cur');
-      else b.classList.remove('cur');
-    });
-    var c = $('mgCancel');
-    if (c) c.hidden = !now;
-    gate.hidden = false;
-  }
-
   /* ---------- 顶栏版本按钮 ---------- */
   function addSwitch() {
     var bar = document.querySelector('header');
@@ -172,9 +174,9 @@
     if (m) {
       apply(m);
     } else {
-      openGate();
       var sw = $('modeSwitch'); if (sw) sw.textContent = '选择版本';
     }
+    openGate();
 
     Array.prototype.forEach.call(gate.querySelectorAll('.mg-card'), function (b) {
       b.onclick = function () {
