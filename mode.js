@@ -1,6 +1,6 @@
 /* ============================================================
-   mode.js · 读易 — 手机版 / 电脑版
-   首次进入先选版本；手机版为横屏排版，目录与助手走侧滑抽屉
+   mode.js · 读易 — 电脑版 / 手机版·竖屏 / 手机版·横屏
+   首次进入先选版本；之后顶栏按钮可随时重选
    ============================================================ */
 (function () {
   var KEY = 'zy.viewmode';
@@ -11,6 +11,8 @@
               (navigator.maxTouchPoints > 0);
   } catch (e) {}
   if (isTouch) root.classList.add('mtouch');
+
+  var MODE_NAME = { desktop: '电脑版', mp: '手机版·竖屏', ml: '手机版·横屏' };
 
   function $(id) { return document.getElementById(id); }
 
@@ -23,13 +25,6 @@
       '<div class="mg-t">读易 · 周易精读</div>' +
       '<div class="mg-s">先选一种阅读方式 · 之后可在顶栏随时切换</div>' +
       '<div class="mg-cards">' +
-        '<button class="mg-card" data-m="mobile">' +
-          '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6">' +
-          '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18.5h2"/></svg>' +
-          '<b>手机版</b>' +
-          '<i>横屏阅读<br>目录 / 助手 做成侧滑抽屉</i>' +
-          '<em class="mg-rec"' + (isTouch ? '' : ' hidden') + '>推荐</em>' +
-        '</button>' +
         '<button class="mg-card" data-m="desktop">' +
           '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6">' +
           '<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>' +
@@ -37,11 +32,25 @@
           '<i>三栏常驻<br>目录 / 助手 固定在两侧</i>' +
           '<em class="mg-rec"' + (isTouch ? ' hidden' : '') + '>推荐</em>' +
         '</button>' +
+        '<button class="mg-card" data-m="mp">' +
+          '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6">' +
+          '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18.5h2"/></svg>' +
+          '<b>手机版 · 竖屏</b>' +
+          '<i>窄屏排版<br>顶栏可换行 / 抽屉近满屏</i>' +
+          '<em class="mg-rec"' + (isTouch ? '' : ' hidden') + '>推荐</em>' +
+        '</button>' +
+        '<button class="mg-card" data-m="ml">' +
+          '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6">' +
+          '<rect x="2" y="7" width="20" height="10" rx="2.5"/><path d="M18.5 11v2"/></svg>' +
+          '<b>手机版 · 横屏</b>' +
+          '<i>宽屏排版<br>顶栏压矮 / 抽屉收窄</i>' +
+        '</button>' +
       '</div>' +
-      '<div class="mg-foot">手机版按横屏排版：竖屏时目录与助手会挤满屏幕，会提示你转屏</div>' +
+      '<button class="mg-cancel" id="mgCancel" hidden>继续当前版本</button>' +
+      '<div class="mg-foot">横屏版按宽屏排版，竖屏拿手机时会提示转屏；竖屏版按窄屏排版，随时可用</div>' +
     '</div>';
 
-  /* ---------- 竖屏提示 ---------- */
+  /* ---------- 竖屏提示（仅横屏版） ---------- */
   var rot = document.createElement('div');
   rot.id = 'mrotate';
   rot.innerHTML =
@@ -50,10 +59,11 @@
       '<rect x="8" y="1.5" width="8" height="15" rx="2" transform="rotate(90 12 9)"/>' +
       '<path d="M4.5 20a8 8 0 0 1 0-11"/><path d="M2 17.5l2.6 2.8L7.4 17.8"/></svg></div>' +
       '<div class="mr-t">请横屏阅读</div>' +
-      '<div class="mr-s">手机版是横屏排版<br>竖屏下目录和助手会挤满整个屏幕</div>' +
+      '<div class="mr-s">你选的是手机版 · 横屏<br>竖屏下仍是竖屏排版，不会自动变横屏</div>' +
       '<div class="mr-btns">' +
         '<button class="mr-btn" id="mrDesk">改用电脑版</button>' +
-        '<button class="mr-btn mr-keep" id="mrMobile">仍用手机版</button>' +
+        '<button class="mr-btn mr-keep" id="mrPortrait">换成竖屏版</button>' +
+        '<button class="mr-btn mr-keep" id="mrMobile">仍用横屏版（不再提示）</button>' +
       '</div>' +
     '</div>';
 
@@ -91,15 +101,24 @@
   /* 保留站点原生开关，切回电脑版时还原 */
   var orig = {};
 
+  function cur() {
+    if (root.classList.contains('mode-desktop')) return 'desktop';
+    if (root.classList.contains('m-portrait')) return 'mp';
+    if (root.classList.contains('m-landscape')) return 'ml';
+    return null;
+  }
+
   function apply(m) {
-    root.classList.remove('mode-mobile', 'mode-desktop');
-    root.classList.add('mode-' + m, 'mready');
+    root.classList.remove('mode-mobile', 'mode-desktop', 'm-portrait', 'm-landscape');
+    if (m === 'desktop') root.classList.add('mode-desktop');
+    else root.classList.add('mode-mobile', m === 'mp' ? 'm-portrait' : 'm-landscape');
+    root.classList.add('mready');
     closeAll();
     var sw = $('modeSwitch');
-    if (sw) { sw.textContent = (m === 'mobile' ? '手机版' : '电脑版'); sw.title = '切换手机版 / 电脑版'; }
+    if (sw) { sw.textContent = (MODE_NAME[m] || '选择版本'); sw.title = '点击重新选择版本'; }
 
     var st = $('sideTog'), at = $('aiTog');
-    if (m === 'mobile') {
+    if (m !== 'desktop') {
       document.body.classList.remove('sideoff', 'aioff', 'aiforce', 'sidecollapse');
       if (st) { orig.side = st.onclick; st.onclick = function () { drawer('side'); }; }
       if (at) { orig.ai = at.onclick; at.onclick = function () { drawer('ai'); }; }
@@ -112,21 +131,33 @@
   }
 
   function save(m) { try { localStorage.setItem(KEY, m); } catch (e) {} }
-  function read() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function read() {
+    var v = null;
+    try { v = localStorage.getItem(KEY); } catch (e) {}
+    if (v === 'mobile') v = 'ml';           /* 旧版「手机版」视为横屏版 */
+    if (v !== 'desktop' && v !== 'mp' && v !== 'ml') v = null;
+    return v;
+  }
 
-  /* ---------- 顶栏版本切换按钮 ---------- */
+  function openGate() {
+    var now = cur();
+    Array.prototype.forEach.call(gate.querySelectorAll('.mg-card'), function (b) {
+      if (b.getAttribute('data-m') === now) b.classList.add('cur');
+      else b.classList.remove('cur');
+    });
+    var c = $('mgCancel');
+    if (c) c.hidden = !now;
+    gate.hidden = false;
+  }
+
+  /* ---------- 顶栏版本按钮 ---------- */
   function addSwitch() {
     var bar = document.querySelector('header');
     if (!bar || $('modeSwitch')) return;
     var b = document.createElement('button');
     b.className = 'tbtn';
     b.id = 'modeSwitch';
-    b.onclick = function () {
-      var now = root.classList.contains('mode-mobile') ? 'mobile' : 'desktop';
-      var next = now === 'mobile' ? 'desktop' : 'mobile';
-      save(next); apply(next);
-      try { toast && toast(next === 'mobile' ? '已切到手机版（请横屏）' : '已切到电脑版'); } catch (e) {}
-    };
+    b.onclick = openGate;
     bar.appendChild(b);
   }
 
@@ -138,10 +169,10 @@
     addSwitch();
 
     var m = read();
-    if (m === 'mobile' || m === 'desktop') {
+    if (m) {
       apply(m);
     } else {
-      gate.hidden = false;   /* 首次进入：先选 */
+      openGate();
       var sw = $('modeSwitch'); if (sw) sw.textContent = '选择版本';
     }
 
@@ -149,10 +180,15 @@
       b.onclick = function () {
         var m = b.getAttribute('data-m');
         save(m); gate.hidden = true; apply(m);
+        try { toast && toast('已切到' + MODE_NAME[m]); } catch (e) {}
       };
     });
+    var gc = $('mgCancel');
+    if (gc) gc.onclick = function () { gate.hidden = true; };
     var md = $('mrDesk');
     if (md) md.onclick = function () { save('desktop'); apply('desktop'); };
+    var mpb = $('mrPortrait');
+    if (mpb) mpb.onclick = function () { save('mp'); apply('mp'); };
     var mm = $('mrMobile');
     if (mm) mm.onclick = function () {
       root.classList.add('m-allow-portrait');
@@ -161,7 +197,9 @@
     try { if (localStorage.getItem(KEY + '_allowPortrait') === '1') root.classList.add('m-allow-portrait'); } catch (e) {}
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeAll();
+      if (e.key !== 'Escape') return;
+      if (!gate.hidden && cur()) { gate.hidden = true; return; }
+      closeAll();
     });
     window.addEventListener('resize', syncTopbar);
     window.addEventListener('orientationchange', function () { setTimeout(syncTopbar, 300); });
