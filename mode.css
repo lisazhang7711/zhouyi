@@ -100,7 +100,28 @@ html.mode-mobile .siderail{display:none!important}
 html.mode-mobile.m-landscape header{height:46px}
 html.mode-mobile.m-landscape aside{width:min(300px,34vw)}
 html.mode-mobile.m-landscape #ai{width:min(340px,40vw)}
-html.mode-mobile.m-landscape main{max-width:none;padding:8px 10px 60px}
+
+html.mode-mobile.m-landscape body{overflow:hidden}
+html.mode-mobile.m-landscape .wrap{
+  display:block;height:calc(100vh - 46px);max-width:none;overflow:hidden;
+}
+html.mode-mobile.m-landscape main{
+  height:100%;max-width:none;padding:10px 12px 0;
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  columns:320px;column-gap:22px;column-fill:auto;
+  scroll-snap-type:x proximity;
+}
+html.mode-mobile.m-landscape main > *{break-inside:avoid;scroll-snap-align:start}
+html.mode-mobile.m-landscape main > .ghead,
+html.mode-mobile.m-landscape main > .usebar,
+html.mode-mobile.m-landscape main > .tui,
+html.mode-mobile.m-landscape main > .tuifoot,
+html.mode-mobile.m-landscape main > .card,
+html.mode-mobile.m-landscape main > .ycard,
+html.mode-mobile.m-landscape main > .note{break-inside:avoid}
+html.mode-mobile.m-landscape main img,
+html.mode-mobile.m-landscape main svg,
+html.mode-mobile.m-landscape main .tu{max-width:100%}
 /* 竖屏版：顶栏可换行、抽屉接近满屏，按窄屏排版 */
 html.mode-mobile.m-portrait header{
   height:auto;min-height:54px;padding:6px 10px;flex-wrap:wrap;row-gap:6px;align-items:center;
