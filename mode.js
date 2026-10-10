@@ -51,7 +51,10 @@
       '<path d="M4.5 20a8 8 0 0 1 0-11"/><path d="M2 17.5l2.6 2.8L7.4 17.8"/></svg></div>' +
       '<div class="mr-t">请横屏阅读</div>' +
       '<div class="mr-s">手机版是横屏排版<br>竖屏下目录和助手会挤满整个屏幕</div>' +
-      '<button class="mr-btn" id="mrDesk">改用电脑版</button>' +
+      '<div class="mr-btns">' +
+        '<button class="mr-btn" id="mrDesk">改用电脑版</button>' +
+        '<button class="mr-btn mr-keep" id="mrMobile">仍用手机版</button>' +
+      '</div>' +
     '</div>';
 
   /* ---------- 抽屉遮罩 ---------- */
@@ -150,6 +153,12 @@
     });
     var md = $('mrDesk');
     if (md) md.onclick = function () { save('desktop'); apply('desktop'); };
+    var mm = $('mrMobile');
+    if (mm) mm.onclick = function () {
+      root.classList.add('m-allow-portrait');
+      try { localStorage.setItem(KEY + '_allowPortrait', '1'); } catch (e) {}
+    };
+    try { if (localStorage.getItem(KEY + '_allowPortrait') === '1') root.classList.add('m-allow-portrait'); } catch (e) {}
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeAll();
