@@ -96,11 +96,11 @@ html.mode-mobile.m-ai #ai{transform:none}
 
 html.mode-mobile .siderail{display:none!important}
 
-/* 横屏版：顶栏压矮、抽屉收窄，横向空间留给正文 */
+/* 横屏版：顶栏压矮、抽屉收窄，正文沿手机宽度方向展开 */
 html.mode-mobile.m-landscape header{height:46px}
 html.mode-mobile.m-landscape aside{width:min(300px,34vw)}
 html.mode-mobile.m-landscape #ai{width:min(340px,40vw)}
-html.mode-mobile.m-landscape main{padding:14px 18px 60px}
+html.mode-mobile.m-landscape main{max-width:none;padding:8px 10px 60px}
 /* 竖屏版：顶栏可换行、抽屉接近满屏，按窄屏排版 */
 html.mode-mobile.m-portrait header{
   height:auto;min-height:54px;padding:6px 10px;flex-wrap:wrap;row-gap:6px;align-items:center;
