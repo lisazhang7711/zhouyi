@@ -103,7 +103,11 @@
     root.classList.add('mready');
     closeAll();
     var sw = $('modeSwitch');
-    if (sw) { sw.textContent = (MODE_NAME[m] || '选择版本'); sw.title = '点击重新选择版本'; }
+    if (sw) {
+      var other = (m === 'desktop' ? 'mp' : 'desktop');
+      sw.textContent = MODE_NAME[other];
+      sw.title = '切换到' + MODE_NAME[other];
+    }
 
     var st = $('sideTog'), at = $('aiTog');
     if (m !== 'desktop') {
@@ -134,7 +138,11 @@
     var b = document.createElement('button');
     b.className = 'tbtn';
     b.id = 'modeSwitch';
-    b.onclick = openGate;
+    b.onclick = function () {
+      var next = (cur() === 'desktop' ? 'mp' : 'desktop');
+      save(next); apply(next);
+      try { toast && toast('已切到' + MODE_NAME[next]); } catch (e) {}
+    };
     bar.appendChild(b);
   }
 
