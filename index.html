@@ -73,6 +73,9 @@ body.sideoff .siderail{display:none}
   position:sticky;top:0;background:var(--side);z-index:2}
 .sidetop .seg{flex:1;min-width:0}
 .sidetop .seg button{flex:1;text-align:center;padding:5px 0}
+/* 两级结构：一层「目录/索引/★」+ 二层具体视图，竖向堆叠 */
+.sidetop-segs{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.sidetop-segs .seg{width:100%}
 .minbtn,.wbtn{
   flex:0 0 auto;border:1px solid var(--line2);background:transparent;border-radius:4px;
   font-family:inherit;font-size:12px;line-height:1;color:var(--ink3);cursor:pointer;padding:5px 7px;
@@ -389,7 +392,21 @@ main{flex:1 1 auto;min-width:0;padding:22px 30px 90px;max-width:920px;margin:0 a
   font-size:11px;color:var(--ink3);cursor:pointer;padding:1px 8px}
 .lmini:hover{border-color:var(--blue);color:var(--blue)}
 
-/* ---- 顶栏形状开关：目录 / 助手，默认都展开 ---- */
+/* 搜索结果浮层：直接显示在顶栏搜索框正下方，不依赖左侧目录是否打开 */
+#qdrop{
+  position:fixed;z-index:80;display:none;background:var(--card);color:var(--ink);
+  border:1px solid var(--line2);border-radius:8px;box-shadow:0 10px 30px var(--shadow);
+  max-height:min(60vh,480px);overflow-y:auto;padding:5px;
+}
+#qdrop.on{display:block}
+#qdrop .qi{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;cursor:pointer}
+#qdrop .qi:hover{background:var(--hover)}
+#qdrop .qn{flex:0 0 26px;text-align:right;font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+#qdrop .qnm{font-size:14px;font-weight:600}
+#qdrop .qfull{font-size:11.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#qdrop .qempty{padding:10px 12px;font-size:12.5px;color:var(--ink3)}
+
+/* ---- 顶栏形状开关：目录 / 助手，首次进入默认收起 ---- */
 .tbtn{
   border:1px solid var(--line2);border-radius:6px;background:transparent;font-family:inherit;
   font-size:13px;color:var(--ink2);cursor:pointer;padding:5px 11px;white-space:nowrap;
@@ -445,10 +462,6 @@ body.aioff #ai{display:none}
 .bugitem .bq{grid-column:2;color:var(--ink2);word-break:break-all}
 .bugitem .bt{grid-column:2;color:var(--ink3);font-size:11px}
 #aibody{flex:1 1 auto;overflow-y:auto;padding:12px 13px}
-#aipreset{flex:0 0 auto;padding:0 13px 8px;display:flex;gap:5px;flex-wrap:wrap}
-.pchip{border:1px solid var(--line2);border-radius:12px;font-size:11.5px;color:var(--ink3);
-  cursor:pointer;padding:2px 10px;line-height:1.9}
-.pchip:hover{border-color:var(--blue);color:var(--blue)}
 .aiinp{flex:0 0 auto;display:flex;gap:6px;padding:10px 13px 13px;border-top:1px solid var(--line2)}
 .aiinp input{flex:1;min-width:0;border:1px solid var(--line2);border-radius:6px;background:var(--card);
   color:var(--ink);font-family:inherit;font-size:13px;padding:6px 10px}
@@ -534,7 +547,7 @@ body.aioff #ai{display:none}
 .ycard.hit{box-shadow:0 0 0 2px var(--red) inset;border-radius:4px}
 
 </style>
-<link rel="stylesheet" href="mode.css?v=7">
+<link rel="stylesheet" href="mode.css?v=8">
 </head>
 <body>
 
@@ -562,6 +575,7 @@ body.aioff #ai{display:none}
   <button class="tbtn on" id="sideTog" title="显示或隐藏左侧目录">☰ 目录</button>
   <button class="tbtn on" id="aiTog" title="显示或隐藏右侧小助手">助手</button>
 </header>
+<div id="qdrop"></div>
 
 <div class="wrap">
   <button class="siderail" id="sideRail" title="展开目录">目录 ›</button>
@@ -573,7 +587,6 @@ body.aioff #ai{display:none}
       <span><button id="aiclear" title="清空对话">清空</button></span>
     </div>
     <div id="aibody"></div>
-    <div id="aipreset"></div>
     <div class="aiinp"><input id="aiq" placeholder="问一句：坎卦怎么用？" /><button id="aisend">问</button></div>
     <details class="aiset" id="aiset">
       <summary>模型设置（可选）</summary>
@@ -603,22 +616,22 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=13"></script>
-<script src="gloss.js?v=13"></script>
-<script src="data.js?v=13"></script>
-<script src="layer.js?v=13"></script>
-<script src="sub.js?v=13"></script>
-<script src="xs.js?v=13"></script>
-<script src="shi.js?v=13"></script>
-<script src="qa.js?v=13"></script>
-<script src="yao_p1.js?v=13"></script>
-<script src="yao_p2.js?v=13"></script>
-<script src="yao_p3.js?v=13"></script>
-<script src="yao_p4.js?v=13"></script>
-<script src="yao_p5.js?v=13"></script>
-<script src="yao_p6.js?v=13"></script>
-<script src="situation.js?v=13"></script>
-<script src="topic.js?v=13"></script>
+<script src="han.js?v=14"></script>
+<script src="gloss.js?v=14"></script>
+<script src="data.js?v=14"></script>
+<script src="layer.js?v=14"></script>
+<script src="sub.js?v=14"></script>
+<script src="xs.js?v=14"></script>
+<script src="shi.js?v=14"></script>
+<script src="qa.js?v=14"></script>
+<script src="yao_p1.js?v=14"></script>
+<script src="yao_p2.js?v=14"></script>
+<script src="yao_p3.js?v=14"></script>
+<script src="yao_p4.js?v=14"></script>
+<script src="yao_p5.js?v=14"></script>
+<script src="yao_p6.js?v=14"></script>
+<script src="situation.js?v=14"></script>
+<script src="topic.js?v=14"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -653,6 +666,9 @@ G.forEach(function(g){ BY_LINES[linesOf(g)] = g; });
 function guaByLines(l){ return BY_LINES[l] || null; }
 
 let cur = 1, mode = 'both', view = 'list', moving = [false,false,false,false,false,false];
+/* 侧栏两级结构：一层「目录 / 索引 / ★」，二层才是具体视图
+   目录 = 卦序 + 卦阵；索引 = 主题 / 话题 / 史层 / 处境 */
+let sideTab = 'mulu', viewMulu = 'list', viewIndex = 'tag';
 let filterTag = null, ziOn = true, xsOpen = false, shiOpen = false, theme = 'day';
 /* 〔境〕处境卡展开状态：键为处境 id。跳卦会重绘侧栏，靠它把展开的卡还原回去 */
 let situOpenMap = {};
@@ -856,7 +872,7 @@ function gitemHTML(g){
 function sideTopHTML(seg){
   const w = sideWGet();
   const wt = w ? (w + 'px') : HM('自动');
-  return '<div class="sidetop">' + (seg || '<div class="seg"></div>')
+  return '<div class="sidetop"><div class="sidetop-segs">' + (seg || '<div class="seg"></div>') + '</div>'
     + '<button class="wbtn' + (w ? ' on' : '') + '" data-w="1" title="'
     + HM('左栏宽度') + '：' + wt + '｜' + HM('点击换档，也可拖动左栏右边缘；当前档：') + wt + '">⇔</button>'
     + '<button class="minbtn" data-min="1" title="'
@@ -968,15 +984,26 @@ function initSideGrip(){
 function renderSide(){
   const el = document.getElementById('side');
   document.body.classList.toggle('vgrid', view === 'grid');   /* 卦阵视图：左栏临时加宽 */
-  const top = sideTopHTML('<div class="seg" id="viewSeg">'
-    + '<button data-v="list"' + (view==='list'?' class="on"':'') + '>' + HM('卦序') + '</button>'
-    + '<button data-v="grid"' + (view==='grid'?' class="on"':'') + '>' + HM('卦阵') + '</button>'
-    + '<button data-v="tag"'  + (view==='tag' ?' class="on"':'') + '>' + HM('主题') + '</button>'
-    + '<button data-v="topic"' + (view==='topic'?' class="on"':'') + '>' + HM('话题') + '</button>'
-    + '<button data-v="shi"'  + (view==='shi' ?' class="on"':'') + '>' + HM('史') + '</button>'
-    + '<button data-v="sit"'  + (view==='sit' ?' class="on"':'') + '>' + HM('处境') + '</button>'
-    + '<button data-v="fav"'  + (view==='fav' ?' class="on"':'') + '>★ ' + (favCount() || '') + '</button>'
-    + '</div>');
+  const tabSeg = '<div class="seg" id="tabSeg">'
+    + '<button data-t="mulu"' + (sideTab==='mulu' ?' class="on"':'') + '>' + HM('目录') + '</button>'
+    + '<button data-t="index"' + (sideTab==='index'?' class="on"':'') + '>' + HM('索引') + '</button>'
+    + '<button data-t="fav"'   + (sideTab==='fav'  ?' class="on"':'') + '>★ ' + (favCount() || '') + '</button>'
+    + '</div>';
+  let subSeg = '';
+  if (sideTab === 'mulu') {
+    subSeg = '<div class="seg" id="viewSeg">'
+      + '<button data-v="list"' + (view==='list'?' class="on"':'') + '>' + HM('卦序') + '</button>'
+      + '<button data-v="grid"' + (view==='grid'?' class="on"':'') + '>' + HM('卦阵') + '</button>'
+      + '</div>';
+  } else if (sideTab === 'index') {
+    subSeg = '<div class="seg" id="viewSeg">'
+      + '<button data-v="tag"'   + (view==='tag'  ?' class="on"':'') + '>' + HM('主题') + '</button>'
+      + '<button data-v="topic"' + (view==='topic'?' class="on"':'') + '>' + HM('话题') + '</button>'
+      + '<button data-v="shi"'   + (view==='shi'  ?' class="on"':'') + '>' + HM('史层') + '</button>'
+      + '<button data-v="sit"'   + (view==='sit'  ?' class="on"':'') + '>' + HM('处境') + '</button>'
+      + '</div>';
+  }
+  const top = sideTopHTML(tabSeg + subSeg);
   let body = '';
   if (view === 'grid') {
     body = '<div class="grid">';
@@ -1017,8 +1044,22 @@ function renderSide(){
   el.innerHTML = top + body;
   bindSideMin(el);
   el.querySelectorAll('.wbtn[data-w]').forEach(function(b){ b.onclick = sideWStep; });
+  el.querySelectorAll('#tabSeg button').forEach(function(b){
+    b.onclick = function(){
+      sideTab = b.dataset.t;
+      if (sideTab === 'mulu') view = viewMulu;
+      else if (sideTab === 'index') view = viewIndex;
+      else view = 'fav';
+      renderSide();
+    };
+  });
   el.querySelectorAll('#viewSeg button').forEach(function(b){
-    b.onclick = function(){ view = b.dataset.v; renderSide(); };
+    b.onclick = function(){
+      view = b.dataset.v;
+      if (sideTab === 'mulu') viewMulu = view;
+      else if (sideTab === 'index') viewIndex = view;
+      renderSide();
+    };
   });
   el.querySelectorAll('.gcell,.gitem,.chip[data-n],.shiitem[data-n]').forEach(function(c){
     c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
@@ -1640,23 +1681,43 @@ document.getElementById('themeSeg').onclick = function(e){
   try { localStorage.setItem('zy.theme', theme); } catch(err){}
   applyTheme();
 };
-document.getElementById('q').oninput = function(){
+/* 搜索：结果直接显示在搜索框正下方的浮层里，与左侧目录是否打开无关 */
+const qInput = document.getElementById('q'), qDrop = document.getElementById('qdrop');
+function qDropClose(){ if (qDrop) qDrop.classList.remove('on'); }
+qInput.oninput = function(){
   const k = this.value.trim();
-  const el = document.getElementById('side');
-  if (!k) { renderSide(); return; }
+  if (!k) { qDropClose(); return; }
   const hit = G.filter(function(g){
     return [g.name, g.full, String(g.n), g.ci, g.tags.join(',')].some(function(s){
       return s.indexOf(k) >= 0 || HJ(s).indexOf(k) >= 0;
     });
   });
-  let body = hit.map(gitemHTML).join('');
-  el.innerHTML = sideTopHTML('')
-    + (body || '<div class="favempty">' + HM('未找到') + '</div>');
-  bindSideMin(el);
-  el.querySelectorAll('.gitem').forEach(function(c){
-    c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
+  qDrop.innerHTML = hit.length
+    ? hit.map(function(g){
+        return '<div class="qi" data-n="' + g.n + '">'
+          + '<span class="qn">' + g.n + '</span>'
+          + tuHTML(linesOf(g), 'sm', null, false, wxOf(g))
+          + '<span class="qnm">' + HJ(g.name) + '</span>'
+          + '<span class="qfull">' + HM(g.full) + '</span></div>';
+      }).join('')
+    : '<div class="qempty">' + HM('未找到匹配的卦名、卦辞或主题') + '</div>';
+  qDrop.classList.add('on');
+  const r = this.getBoundingClientRect();
+  qDrop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 320)) + 'px';
+  qDrop.style.top = (r.bottom + 6) + 'px';
+  qDrop.style.width = Math.max(r.width, 300) + 'px';
+  qDrop.querySelectorAll('.qi').forEach(function(c){
+    c.onclick = function(){
+      cur = +c.dataset.n; resetMv(); renderAll();
+      qInput.value = ''; qDropClose();
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
   });
 };
+qInput.onkeydown = function(e){ if (e.key === 'Escape') { this.value = ''; qDropClose(); this.blur(); } };
+document.addEventListener('click', function(e){
+  if (!qDrop.contains(e.target) && e.target !== qInput) qDropClose();
+});
 
 
 /* ---------------- 右侧小助手 ---------------- */
@@ -1710,7 +1771,8 @@ function aiSaveCfg(ep, key, model){
 function msgHTML(x){
   if (x.role === 'q') return '<div class="msg q"><span class="mq">' + esc(x.text) + '</span></div>';
   const a = x.a;
-  let h = '<div class="msg"><div class="mtitle">' + a.title + '</div>';
+  let h = '<div class="msg">';
+  if (a.title) h += '<div class="mtitle">' + a.title + '</div>';
   a.blocks.forEach(function(b){
     if (b.k === 'p')    h += '<div class="mp">' + b.v + '</div>';
     else if (b.k === 'list') h += '<ul class="mul">' + b.v.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>';
@@ -1760,8 +1822,9 @@ function bugExport(){
 }
 function aiPush(x){ aiHist.push(x); renderAI(); }
 function aiWelcome(){
-  aiPush({role:'a', a:{title:HM('可以问我这些'), go:[], blocks:[
+  aiPush({role:'a', a:{title:'', go:[], blocks:[
     {k:'p', v:HM('我读的是本站自己的数据：六十四卦的卦辞、大象传、爻辞与自研今译。不提供占卜与预测。')},
+    {k:'p', v:HM('您可以这样问（下面只是几个例子，问法不限于此）：')},
     {k:'list', v:QA_PRESET.map(function(t){ return HM(t); })}
   ]}});
 }
@@ -1791,11 +1854,6 @@ function initAI(){
     };
     document.getElementById('aisend').onclick = send;
     document.getElementById('aiq').onkeydown = function(e){ if (e.key === 'Enter') send(); };
-    const ps = document.getElementById('aipreset');
-    ps.innerHTML = QA_PRESET.map(function(t){ return '<span class="pchip">' + HM(t) + '</span>'; }).join('');
-    ps.querySelectorAll('.pchip').forEach(function(c){
-      c.onclick = function(){ const i = document.getElementById('aiq'); i.value = c.textContent; send(); };
-    });
     document.getElementById('aiclear').onclick = function(){ aiHist = []; aiWelcome(); };
     document.getElementById('aiSave').onclick = function(){
       aiSaveCfg(
@@ -1823,11 +1881,12 @@ function initAI(){
     if (bc && bc.ep) document.getElementById('bugEp').value = bc.ep;
     renderBugUI();
 
-    /* 目录 / 助手：默认都展开，状态存本地 */
-    let sideOn = true, aiOn = true;
+    /* 目录 / 助手：首次进入默认都收起（初见体验干净，需要时点顶栏按钮展开），
+       用户手动开过一次（存过 '1'）才默认展开 */
+    let sideOn = false, aiOn = false;
     try {
-      if (localStorage.getItem('zy.sideon') === '0') sideOn = false;
-      if (localStorage.getItem('zy.aion')   === '0') aiOn   = false;
+      if (localStorage.getItem('zy.sideon') === '1') sideOn = true;
+      if (localStorage.getItem('zy.aion')   === '1') aiOn   = true;
     } catch(e){}
     document.getElementById('sideTog').onclick = function(){ sideToggle(); };
     document.getElementById('sideRail').onclick = function(){ sideCollapse(false); };
@@ -1853,7 +1912,7 @@ applyScriptUI();
 renderAll();
 initAI();
 </script>
-<script src="mode.js?v=7"></script>
+<script src="mode.js?v=8"></script>
 
 <!-- ===== 意见反馈栏 feedback-widget ===== -->
 <style>
