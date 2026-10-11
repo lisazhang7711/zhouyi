@@ -167,6 +167,7 @@ function askLocal(q){
   /* ⑧ 兜底 */
   return { title: HM('我还没学会这个问法'), go:[], blocks:[
     {k:'p', v: HM('目前我能确定回答这几类：某一卦讲了什么、某个字词什么意思、某主题有哪些卦、某卦的处境与用法、含某词的句子。')},
+    {k:'p', v: HM('您可以这样问（下面只是几个例子，问法不限于此）：')},
     {k:'list', v: QA_PRESET.map(function(x){ return HM(x); })}
   ]};
 }
