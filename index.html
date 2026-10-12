@@ -141,6 +141,28 @@ main{flex:1 1 auto;min-width:0;padding:22px 30px 90px;max-width:920px;margin:0 a
 .mvbar{font-size:12px;color:var(--ink3);margin-top:6px}
 
 /* 收藏：星标只用金色的「有/无」两态，不引入第二套语义 */
+.yzbar{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.yzbar button{border:1px solid var(--line);background:var(--card);color:var(--ink2);border-radius:6px;
+  padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}
+.yzbar button:hover:not([disabled]){border-color:var(--gold);color:var(--gold)}
+.yzbar button[disabled]{opacity:.4;cursor:default}
+.yzside{padding:2px 0}
+.yzrow{display:grid;grid-template-columns:26px 34px 1fr;gap:6px;align-items:baseline;
+  padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px}
+.yzrow:hover{background:var(--hover)}
+.yzrow .yzn{color:var(--ink3);font-size:11px;text-align:right}
+.yzrow .yzt{color:var(--gold);font-weight:600}
+.yzrow .yzx{color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.yzbook{padding:9px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer}
+.yzbook:hover{border-color:var(--gold);background:var(--hover)}
+.yzbook.on{border-color:var(--gold)}
+.ybh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ybh b{font-size:13px;color:var(--ink)}
+.ybc{font-size:11px;color:var(--ink3);flex:0 0 auto}
+.ybt{font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.6}
+.yznote{font-size:11px;color:var(--ink3);line-height:1.7;margin-top:10px;
+  padding:8px 10px;border:1px dotted var(--line2);border-radius:6px}
+.snum.yzno{cursor:default}
 /* 权重写成 button.star，压过后面 .cbtns button::before 的 ⧉ */
 .cbtns button.star{margin-left:3px}
 .cbtns button.star::before{content:"☆";font-size:13px;color:var(--line2)}
@@ -616,22 +638,24 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
-<script src="han.js?v=14"></script>
-<script src="gloss.js?v=14"></script>
-<script src="data.js?v=14"></script>
-<script src="layer.js?v=14"></script>
-<script src="sub.js?v=14"></script>
-<script src="xs.js?v=14"></script>
-<script src="shi.js?v=14"></script>
-<script src="qa.js?v=14"></script>
-<script src="yao_p1.js?v=14"></script>
-<script src="yao_p2.js?v=14"></script>
-<script src="yao_p3.js?v=14"></script>
-<script src="yao_p4.js?v=14"></script>
-<script src="yao_p5.js?v=14"></script>
-<script src="yao_p6.js?v=14"></script>
-<script src="situation.js?v=14"></script>
-<script src="topic.js?v=14"></script>
+<script src="han.js?v=15"></script>
+<script src="gloss.js?v=15"></script>
+<script src="data.js?v=15"></script>
+<script src="layer.js?v=15"></script>
+<script src="sub.js?v=15"></script>
+<script src="xs.js?v=15"></script>
+<script src="shi.js?v=15"></script>
+<script src="qa.js?v=15"></script>
+<script src="yao_p1.js?v=15"></script>
+<script src="yao_p2.js?v=15"></script>
+<script src="yao_p3.js?v=15"></script>
+<script src="yao_p4.js?v=15"></script>
+<script src="yao_p5.js?v=15"></script>
+<script src="yao_p6.js?v=15"></script>
+<script src="situation.js?v=15"></script>
+<script src="topic.js?v=15"></script>
+<script src="shiyi.js?v=15"></script>
+<script src="yz.js?v=15"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -668,7 +692,8 @@ function guaByLines(l){ return BY_LINES[l] || null; }
 let cur = 1, mode = 'both', view = 'list', moving = [false,false,false,false,false,false];
 /* 侧栏两级结构：一层「目录 / 索引 / ★」，二层才是具体视图
    目录 = 卦序 + 卦阵；索引 = 主题 / 话题 / 史层 / 处境 */
-let sideTab = 'mulu', viewMulu = 'list', viewIndex = 'tag';
+let sideTab = 'mulu', viewMulu = 'list', viewIndex = 'tag', viewYi = 'tuanc';
+let yzBook = null;    /* 当前正在通读的十翼篇目 key，null 表示在看六十四卦 */
 let filterTag = null, ziOn = true, xsOpen = false, shiOpen = false, theme = 'day';
 /* 〔境〕处境卡展开状态：键为处境 id。跳卦会重绘侧栏，靠它把展开的卡还原回去 */
 let situOpenMap = {};
@@ -750,6 +775,8 @@ function sentencesOf(g){
   (YAO[g.n] || []).forEach(function(y, i){
     out.push({k:g.n + ':y' + i, label:HJ(y.t), y:HJ(y.c), m:HM(y.m)});
   });
+  const tuan = (window.YZ_OK && typeof YZ_TUAN === 'function') ? YZ_TUAN(g.n) : null;
+  if (tuan) out.push({k:g.n + ':tuan', label:HM('彖传'), y:HJ(tuan.yw), m:HM(tuan.bh)});
   const xu = XUGUA[g.n];
   if (xu) out.push({k:g.n + ':xu', label:HM('序卦传'), y:HJ(xu[0]), m:HM(xu[1])});
   const za = ZAGUA[g.n];
@@ -780,7 +807,7 @@ function parseKey(k){
   const p = k.split(':'), n = +p[0], g = gua(n);
   if (!g) return null;
   const pp = p[1];
-  if (pp === 'ci' || pp === 'xiang' || pp === 'xu' || pp === 'za') return {n:n, g:g};
+  if (pp === 'ci' || pp === 'xiang' || pp === 'xu' || pp === 'za' || pp === 'tuan') return {n:n, g:g};
   if (/^wy\d+$/.test(pp)) return {n:n, g:g};
   const m = /^y(\d+)$/.exec(pp);
   if (m && YAO[n] && YAO[n][+m[1]]) return {n:n, g:g};
@@ -808,6 +835,8 @@ function favItem(k){
   if (!g) return null;
   if (p[1] === 'ci')    return {k:k, n:n, part:HM('卦辞'),   text:HJ(g.ci),    bai:HM(g.ciM)};
   if (p[1] === 'xiang') return {k:k, n:n, part:HM('大象传'), text:HJ(g.xiang), bai:HM(g.xiangM)};
+  if (p[1] === 'tuan') { const t = (window.YZ_OK && typeof YZ_TUAN === 'function') ? YZ_TUAN(n) : null;
+    return t ? {k:k, n:n, part:HM('彖传'), text:HJ(t.yw), bai:HM(t.bh)} : null; }
   if (p[1] === 'xu') { const a = XUGUA[n]; return a ? {k:k, n:n, part:HM('序卦传'), text:HJ(a[0]), bai:HM(a[1])} : null; }
   if (p[1] === 'za') { const b = ZAGUA[n]; return b ? {k:k, n:n, part:HM('杂卦传'), text:HJ(b[0]), bai:HM(b[1])} : null; }
   const wm = /^wy(\d+)$/.exec(p[1]);
@@ -988,12 +1017,18 @@ function renderSide(){
     + '<button data-t="mulu"' + (sideTab==='mulu' ?' class="on"':'') + '>' + HM('目录') + '</button>'
     + '<button data-t="index"' + (sideTab==='index'?' class="on"':'') + '>' + HM('索引') + '</button>'
     + '<button data-t="fav"'   + (sideTab==='fav'  ?' class="on"':'') + '>★ ' + (favCount() || '') + '</button>'
+    + (window.YZ_OK ? '<button data-t="yi"' + (sideTab==='yi' ? ' class="on"':'') + '>' + HM('十翼') + '</button>' : '')
     + '</div>';
   let subSeg = '';
   if (sideTab === 'mulu') {
     subSeg = '<div class="seg" id="viewSeg">'
       + '<button data-v="list"' + (view==='list'?' class="on"':'') + '>' + HM('卦序') + '</button>'
       + '<button data-v="grid"' + (view==='grid'?' class="on"':'') + '>' + HM('卦阵') + '</button>'
+      + '</div>';
+  } else if (sideTab === 'yi') {
+    subSeg = '<div class="seg" id="viewSeg">'
+      + '<button data-v="tuanc"' + (view==='tuanc'?' class="on"':'') + '>' + HM('彖 · 六十四') + '</button>'
+      + '<button data-v="tonglun"' + (view==='tonglun'?' class="on"':'') + '>' + HM('論 · 五篇') + '</button>'
       + '</div>';
   } else if (sideTab === 'index') {
     subSeg = '<div class="seg" id="viewSeg">'
@@ -1027,6 +1062,12 @@ function renderSide(){
     body = (typeof situHTML === 'function') ? situHTML() : '<div class="favempty">' + HM('处境索引未加载。') + '</div>';
   } else if (view === 'shi') {
     body = shiTimelineHTML();
+  } else if (view === 'tuanc') {
+    body = (window.YZ_OK && typeof YZ_SIDE_TUAN === 'function')
+      ? YZ_SIDE_TUAN() : '<div class="favempty">' + HM('十翼数据未加载。') + '</div>';
+  } else if (view === 'tonglun') {
+    body = (window.YZ_OK && typeof YZ_SIDE_BOOKS === 'function')
+      ? YZ_SIDE_BOOKS() : '<div class="favempty">' + HM('十翼数据未加载。') + '</div>';
   } else if (view === 'fav') {
     const items = fav.map(favItem).filter(Boolean);
     body = items.length
@@ -1049,6 +1090,7 @@ function renderSide(){
       sideTab = b.dataset.t;
       if (sideTab === 'mulu') view = viewMulu;
       else if (sideTab === 'index') view = viewIndex;
+      else if (sideTab === 'yi') view = viewYi;
       else view = 'fav';
       renderSide();
     };
@@ -1058,11 +1100,23 @@ function renderSide(){
       view = b.dataset.v;
       if (sideTab === 'mulu') viewMulu = view;
       else if (sideTab === 'index') viewIndex = view;
+      else if (sideTab === 'yi') viewYi = view;
       renderSide();
     };
   });
   el.querySelectorAll('.gcell,.gitem,.chip[data-n],.shiitem[data-n]').forEach(function(c){
     c.onclick = function(){ cur = +c.dataset.n; resetMv(); renderAll(); };
+  });
+  /* 十翼目录：彖传跳到该卦并定位到彖传卡片；通论直接开篇 */
+  el.querySelectorAll('.yzrow[data-yj]').forEach(function(c){
+    c.onclick = function(){
+      cur = +c.dataset.yj.split(':')[1]; yzBook = null; resetMv(); flowTag = null;
+      setPos(cur + ':tuan'); pendingScroll = true; renderAll();
+    };
+  });
+  el.querySelectorAll('.yzbook[data-yj]').forEach(function(c){
+    c.onclick = function(){ yzBook = c.dataset.yj.split(':')[1]; renderSide(); renderMain();
+      window.scrollTo({top:0, behavior:'smooth'}); };
   });
   /* 〔境〕处境卡点击：跳到该卦，并定位到建议首读的那一爻。
      跳卦会重绘侧栏，这里先把所属处境记成「展开」，重绘后它就不会收起 */
@@ -1218,6 +1272,8 @@ function panelChuan(g, sents, sidx){
       + subBlockHTML(g, 'chuan', ck) + '</div>';
   }
   const xu = XUGUA[g.n], za = ZAGUA[g.n], wy = WENYAN[g.n];
+  const tuan = (window.YZ_OK && typeof YZ_TUAN === 'function') ? YZ_TUAN(g.n) : null;
+  if (tuan) h += blk(g.n + ':tuan', 'tuan', HM('彖传 · 一卦之断'), tuan.yw, tuan.bh);
   if (xu) h += blk(g.n + ':xu', 'xu', HM('序卦传 · 此卦因何而来'), xu[0], xu[1]);
   if (za) h += blk(g.n + ':za', 'za', HM('杂卦传 · 此卦的对举'), za[0], za[1]);
   if (wy) wy.forEach(function(w, j){
@@ -1292,6 +1348,7 @@ function subDefs(kind, g, i){
 function subKeysOf(g){
   const out = [['ci',0],['xiang',0]];
   (YAO[g.n] || []).forEach(function(_, i){ out.push(['yao', i]); });
+  if ((window.YZ_OK && typeof YZ_TUAN === 'function') && YZ_TUAN(g.n)) out.push(['chuan','tuan']);
   if (XUGUA[g.n])   out.push(['chuan','xu']);
   if (ZAGUA[g.n])   out.push(['chuan','za']);
   (WENYAN[g.n] || []).forEach(function(_, j){ out.push(['chuan','wy' + j]); });
@@ -1374,6 +1431,7 @@ function subBoxBody(g, which, kind, i){
 }
 
 function renderMain(){
+  if (yzBook) { renderMainYZ(); return; }
   const g = gua(cur), lines = linesOf(g), d = derive(lines, moving);
   const hasYao = !!YAO[cur];
   const mvCount = moving.filter(Boolean).length;
@@ -1419,7 +1477,8 @@ function renderMain(){
     + '<span class="u"><b>☆</b> ' + HM('= 收藏这一句（每条卦辞 / 爻辞各有一个），从左侧「★」页取回') + '</span>'
     + '<span class="u"><b>' + HM('第 1/9 徽标') + '</b> ' + HM('= 本卦第几句 / 共几句，点一下标记为已读；点主题标签进入主题阅读流') + '</span>'
     + '<span class="u"><b>' + HJ('〔解〕〔用〕〔資〕') + '</b> ' + HM('= 每句下方三个可展开的框：历代解说 / 处境卡 / 他书互见，点开即在原句下面成框。') + '</span>'
-    + '<span class="u"><b>' + HJ('〔傳〕') + '</b> ' + HM('= 卦名下方开关，控制十翼（序卦 / 杂卦 / 文言）是否作为句子计入本卦') + '</span>'
+    + '<span class="u"><b>' + HJ('〔傳〕') + '</b> ' + HM('= 卦名下方开关，控制十翼（彖传 / 序卦 / 杂卦 / 文言）是否作为句子计入本卦') + '</span>'
+    + '<span class="u"><b>' + HM('左侧「十翼」') + '</b> ' + HM('= 彖传六十四条按卦排次，点一条即跳到该卦的彖传；「論」页是系辞上下、说卦、序卦、杂卦、文言五篇全篇通读。') + '</span>'
     + '<span class="u"><b>' + HJ('〔象〕') + '</b> ' + HM('= 每句下方的第四个小框：该句在汉易象数里的体例（当位 / 得中 / 应 / 承乘据）') + '</span>'
     + '<span class="u"><b>' + HJ('〔史〕') + '</b> ' + HM('= 卦名下方的第五层：本卦卦爻辞里的人与事、《左传》《国语》怎么用这一卦。'
       + '有史的句子才会在句下多出一个〔史〕框；左侧「史」页按时代排一条时间轴。') + '</span>'
@@ -1655,6 +1714,39 @@ function jumpYao(yt){
     setTimeout(function(){ t.classList.remove('hit'); }, 2600);
   }, 80);
 }
+/* 十翼整篇通读：与六十四卦视图并列的一个独立视图 */
+function renderMainYZ(){
+  const m = document.getElementById('main');
+  m.innerHTML = (typeof YZ_BOOK_HTML === 'function')
+    ? YZ_BOOK_HTML(yzBook)
+    : '<div class="card"><div class="pend">' + HM('十翼数据未加载。') + '</div></div>';
+  m.querySelectorAll('.yzbar button[data-yz]').forEach(function(b){
+    const t = b.dataset.yz;
+    if (!t || b.disabled) { b.disabled = true; return; }
+    b.onclick = function(){
+      if (t === 'home') { yzBook = null; }
+      else yzBook = t;
+      renderSide(); renderMain();
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
+  });
+  m.querySelectorAll('.cbtns button[data-cp]').forEach(function(b){
+    b.onclick = function(e){
+      e.stopPropagation();
+      const t = b.dataset;
+      if (t.cp === 'y') { put(t.y); toast(HM('已复制原文')); }
+      if (t.cp === 'm') { put(t.m); toast(HM('已复制今译')); }
+      if (t.cp === 'q') { put(t.q); toast(HM('已复制引用（含出处与署名）')); }
+      b.classList.add('done');
+      setTimeout(function(){ b.classList.remove('done'); }, 1300);
+    };
+  });
+  m.querySelectorAll('.chip[data-n]').forEach(function(c){
+    c.onclick = function(){ yzBook = null; cur = +c.dataset.n; resetMv(); renderAll(); };
+  });
+  bindKw(m);
+}
+
 function renderAll(){ renderSide(); renderMain(); }
 
 document.getElementById('scriptSeg').onclick = function(e){
@@ -2099,73 +2191,5 @@ initAI();
 })();
 </script>
 <!-- ===== /意见反馈栏 ===== -->
-<!-- ===== 站点统计埋点 ===== -->
-<script>
-(function(){
-  var U = 'https://itkjrodrzenefmxsyrnx.supabase.co';
-  var A = 'sb_publishable_Tfq41bRCMvAVZYgYuEJe9g_RkrFKQZB';
-  var S = 'zhouyi';
-  var K = 'st_vid';
-  var vid = '';
-  try {
-    vid = localStorage.getItem(K) || '';
-    if (!vid) {
-      vid = (crypto && crypto.randomUUID)
-        ? crypto.randomUUID().replace(/-/g, '')
-        : 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem(K, vid);
-    }
-  } catch (e) { vid = ''; }
-  if (!vid) return;
-
-  var P = 'st_dev';
-  function day8() {
-    var d = new Date(Date.now() + 8 * 3600000);
-    return d.getUTCFullYear() + '-' +
-           String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
-           String(d.getUTCDate()).padStart(2, '0');
-  }
-  function profile(day) {
-    var o = {};
-    try { o = JSON.parse(localStorage.getItem(P) || '{}'); } catch (e) {}
-    o.n = (o.n || 0) + 1;
-    o.s = o.s || {}; o.s[S] = (o.s[S] || 0) + 1;
-    o.d = o.d || []; if (o.d.indexOf(day) < 0) o.d.push(day); o.d.sort();
-    o.w = o.w || 0;
-    o.fd = o.fd || day;
-    try { localStorage.setItem(P, JSON.stringify(o)); } catch (e) {}
-    return o;
-  }
-  function post(body) {
-    try {
-      fetch(U + '/rest/v1/rpc/report', {
-        method: 'POST',
-        headers: { 'apikey': A, 'Authorization': 'Bearer ' + A,
-                   'Content-Type': 'application/json' },
-        body: JSON.stringify(body), keepalive: true
-      }).catch(function(){});
-    } catch (e) {}
-  }
-
-  var t0 = Date.now(), left = false;
-  var day = day8(), dev = profile(day);
-  post({ p_site: S, p_vid: vid, p_day: day, p_cnt: 1, p_dev: dev });
-
-  function leave() {
-    if (left) return; left = true;
-    var sec = Math.round((Date.now() - t0) / 1000);
-    if (sec < 0) sec = 0;
-    if (sec > 3600) sec = 3600;
-    dev.w = (dev.w || 0) + sec;
-    try { localStorage.setItem(P, JSON.stringify(dev)); } catch (e) {}
-    post({ p_site: S, p_vid: vid, p_day: day, p_cnt: 0, p_dev: dev, p_dwell: sec });
-  }
-  addEventListener('pagehide', leave);
-  addEventListener('beforeunload', leave);
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') leave();
-  });
-})();
-</script>
 </body>
 </html>
