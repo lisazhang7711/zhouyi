@@ -433,6 +433,11 @@ main{flex:1 1 auto;min-width:0;padding:22px 30px 90px;max-width:920px;margin:0 a
   border:1px solid var(--line2);border-radius:6px;background:transparent;font-family:inherit;
   font-size:13px;color:var(--ink2);cursor:pointer;padding:5px 11px;white-space:nowrap;
 }
+/* 未登录时的今译占位：要看得见、要像"锁着"，而不是像"没写完" */
+.lockbai{display:inline-block;color:var(--ink3);font-size:13px;letter-spacing:.02em}
+.lockbtn{margin-left:8px;font:inherit;font-size:12px;padding:2px 10px;border-radius:999px;
+  border:1px solid var(--line2);background:var(--card);color:var(--ink2);cursor:pointer}
+.lockbtn:hover{background:var(--hover);color:var(--ink)}
 .tbtn:hover{background:var(--hover)}
 .tbtn.on{background:var(--ink);color:var(--onink)}
 body.sideoff aside{display:none}
@@ -683,25 +688,26 @@ body.aioff #ai{display:none}
   </div>
 </div>
 
-<script src="han.js?v=15"></script>
-<script src="gloss.js?v=15"></script>
-<script src="data.js?v=15"></script>
-<script src="layer.js?v=15"></script>
-<script src="sub.js?v=15"></script>
-<script src="xs.js?v=15"></script>
-<script src="shi.js?v=15"></script>
-<script src="qa.js?v=15"></script>
-<script src="yao_p1.js?v=15"></script>
-<script src="yao_p2.js?v=15"></script>
-<script src="yao_p3.js?v=15"></script>
-<script src="yao_p4.js?v=15"></script>
-<script src="yao_p5.js?v=15"></script>
-<script src="yao_p6.js?v=15"></script>
-<script src="situation.js?v=15"></script>
-<script src="topic.js?v=15"></script>
-<script src="shiyi.js?v=15"></script>
-<script src="yz.js?v=15"></script>
-<script src="auth.js?v=15"></script>
+<script src="han.js?v=16"></script>
+<script src="gloss.js?v=16"></script>
+<script src="data.js?v=16"></script>
+<script src="layer.js?v=16"></script>
+<script src="sub.js?v=16"></script>
+<script src="xs.js?v=16"></script>
+<script src="shi.js?v=16"></script>
+<script src="qa.js?v=16"></script>
+<script src="yao_p1.js?v=16"></script>
+<script src="yao_p2.js?v=16"></script>
+<script src="yao_p3.js?v=16"></script>
+<script src="yao_p4.js?v=16"></script>
+<script src="yao_p5.js?v=16"></script>
+<script src="yao_p6.js?v=16"></script>
+<script src="situation.js?v=16"></script>
+<script src="topic.js?v=16"></script>
+<script src="shiyi.js?v=16"></script>
+<script src="yz.js?v=16"></script>
+<script src="auth.js?v=16"></script>
+<script src="gated.js?v=16"></script>
 <script>
 /* 被别人套进 iframe 当成免费内容源时，直接跳出到顶层。
    github.io 没有服务端，拦不住整站抓取，但至少不做别人的画框。 */
@@ -961,6 +967,16 @@ function annotate(text){
 }
 /* 今译逐词注：今译是白话，用另一套索引（HM 通道）匹配，
    这样「涉大川」的译文「渡过大河」也能点开同一条释义 */
+/* 今译不在公开文件里（见 gated.js）。空字符串 = 未登录或未载入，
+   这时给一句提示，而不是留一片空白让人以为加载失败。 */
+function baiHtml(t){
+  if (t) return annotateM(t);
+  if (window.ZYAuth && ZYAuth.session())
+    return '<span class="lockbai">' + HM('今译未载入，请刷新一次') + '</span>';
+  return '<span class="lockbai">' + HM('今译 · 登录后可见')
+    + ' <button class="lockbtn" data-acct="1">' + HM('登录') + '</button></span>';
+}
+
 function annotateM(text){
   const t = HM(text);
   if (!ziOn || !GLOSS_RE_M) return esc(t);
@@ -1603,7 +1619,7 @@ function renderMain(){
     + snumHTML(cur + ':ci', 0, sents.length) + '<h3>' + HM('卦辞') + '</h3>'
     + cbtns(HJ(g.ci), HM(g.ciM), head1, cur + ':ci') + '</div>';
   if (mode !== 'bai')  h += '<div class="yuan">' + annotate(g.ci) + '</div>';
-  if (mode !== 'yuan') h += '<div class="bai">' + annotateM(g.ciM) + '</div>';
+  if (mode !== 'yuan') h += '<div class="bai">' + baiHtml(g.ciM) + '</div>';
   h += subBlockHTML(g, 'ci', 0);
   h += '</div>';
 
@@ -1612,7 +1628,7 @@ function renderMain(){
     + snumHTML(cur + ':xiang', 1, sents.length) + '<h3>' + HM('大象传') + '</h3>'
     + cbtns(HJ(g.xiang), HM(g.xiangM), head2, cur + ':xiang') + '</div>';
   if (mode !== 'bai')  h += '<div class="yuan">' + annotate(g.xiang) + '</div>';
-  if (mode !== 'yuan') h += '<div class="bai">' + annotateM(g.xiangM) + '</div>';
+  if (mode !== 'yuan') h += '<div class="bai">' + baiHtml(g.xiangM) + '</div>';
   h += subBlockHTML(g, 'xiang', 0);
   h += '</div>';
 
@@ -1628,7 +1644,7 @@ function renderMain(){
         + '<h3>' + HJ(y.t) + '</h3>'
         + cbtns(HJ(y.c), HM(y.m), head, cur + ':y' + i) + '</div>';
       if (mode !== 'bai') h += '<div class="yuan" style="font-size:16px">' + annotate(y.c) + '</div>';
-      if (mode !== 'yuan') h += '<div class="bai">' + annotateM(y.m) + '</div>';
+      if (mode !== 'yuan') h += '<div class="bai">' + baiHtml(y.m) + '</div>';
       if (mode !== 'bai' && y.x) h += '<div class="xiao">' + annotate(y.x) + '</div>';
       if (y.z && y.z.length && mode !== 'yuan') {
         h += '<div class="zi">' + y.z.map(function(z){
@@ -2399,7 +2415,16 @@ if (window.ZYAuth) {
       fav.length = 0; read.clear(); subs.clear();
       STAMP = { fav: {}, read: {}, subs: {} };
       acctSig = '';
+      /* 内存里的今译、处境卡也要清：同一台机器换个人用，不该还看得见上一个人的 */
+      if (window.ZY_CONTENT) ZY_CONTENT.wipe();
       renderAll();
+    }
+    /* 登录后把云端内容取回来。取不到就明说，不假装"加载中" */
+    if (on && window.ZY_CONTENT && !ZY_CONTENT.isLoaded()) {
+      ZY_CONTENT.load().then(function (ok) {
+        if (ok) { acctSig = ''; renderAll(); }
+        else if (on) { toast('已登录，但内容库为空：请先跑内容上传 SQL'); }
+      });
     }
     acctWas = on;
     var b = document.getElementById('acctBtn');
@@ -2421,6 +2446,15 @@ if (window.ZYAuth) {
 
 /* 复制时附出处。禁止复制是拦不住的（禁用脚本就绕过了），
    但让"搬走的内容"自带来源，至少能让读者找到原件。 */
+/* 页面上所有"登录"入口（今译占位、处境提示）统一走这里，避免一个个绑 */
+document.addEventListener('click', function (e) {
+  var t = (e.target && e.target.closest) ? e.target.closest('[data-acct]') : null;
+  if (!t) return;
+  e.preventDefault();
+  var b = document.getElementById('acctBtn');
+  if (b) b.click();
+});
+
 document.addEventListener('copy', function (e) {
   var ae = document.activeElement;
   if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT')) return;  /* 站内复制按钮走这条，别动它 */

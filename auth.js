@@ -187,6 +187,9 @@
     push: push,
     user: user,
     session: session,
+    /* 给 gated.js 用：带用户 JWT 直接查 PostgREST（内容表只有 authenticated 能读） */
+    token: token,
+    req: req,
     onChange: function (fn) { listeners.push(fn); try { fn(sess); } catch (e) {} },
     /* 打开页面时先看是不是从确认邮件跳回来的；再用本地 refresh_token 静默续期 */
     boot: function () {
