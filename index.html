@@ -703,6 +703,38 @@ body.aioff #ai{display:none}
 <script src="yz.js?v=15"></script>
 <script src="auth.js?v=15"></script>
 <script>
+/* 被别人套进 iframe 当成免费内容源时，直接跳出到顶层。
+   github.io 没有服务端，拦不住整站抓取，但至少不做别人的画框。 */
+try { if (window.top !== window.self) window.top.location = window.self.location.href; } catch (e) {}
+
+/* ---------------- 存储分层 ----------------
+   未登录：只写 sessionStorage —— 刷新还在，关掉标签页就没了，换个人开这台机器也看不到。
+   登录后：写 localStorage（同时同步云端），下次打开还在。
+   这就是"登录才有记忆"的实现点：不是界面上藏起来，而是根本没往持久层写。 */
+var ZY_SEK = ['zy.fav','zy.read','zy.pos','zy.subs','zy.layers','zy.script','zy.zi','zy.theme',
+              'zy.situopen','zy.topicopen','zy.tagopen','zy.times'];
+function zyAuthed(){ return !!(window.ZYAuth && window.ZYAuth.session()); }
+function zyGet(k){
+  try {
+    if (zyAuthed()) { var v = localStorage.getItem(k); if (v !== null) return v; }
+    return sessionStorage.getItem(k);
+  } catch (e) { return null; }
+}
+function zyPut(k, v){
+  try { (zyAuthed() ? localStorage : sessionStorage).setItem(k, v); } catch (e) {}
+}
+function zyDel(k){ try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} }
+/* 登录成功那一刻，把这次会话里攒的收藏搬进持久层 */
+function zyPromote(){
+  ZY_SEK.forEach(function (k) {
+    try { var v = sessionStorage.getItem(k); if (v !== null) localStorage.setItem(k, v); } catch (e) {}
+  });
+}
+/* 登出（以及换账号）必须把持久层清掉，否则下次不登录还看得见上次的东西 */
+function zyWipe(){
+  ZY_SEK.forEach(function (k) { zyDel(k); });
+}
+
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
   '乾':'乾為天、為圜、為君、為父、為玉、為金、為寒、為冰、為大赤、為良馬、為木果。',
@@ -744,26 +776,26 @@ let filterTag = null, ziOn = true, xsOpen = false, shiOpen = false, theme = 'day
 /* 〔境〕处境卡展开状态：键为处境 id。跳卦会重绘侧栏，靠它把展开的卡还原回去 */
 let situOpenMap = {};
 try {
-  const so = localStorage.getItem('zy.situopen'); if (so) situOpenMap = JSON.parse(so) || {};
+  const so = zyGet('zy.situopen'); if (so) situOpenMap = JSON.parse(so) || {};
 } catch(e){}
 function situSetOpen(id, on){
   if (on) situOpenMap[id] = true; else delete situOpenMap[id];
-  try { localStorage.setItem('zy.situopen', JSON.stringify(situOpenMap)); } catch(e){}
+  try { zyPut('zy.situopen', JSON.stringify(situOpenMap)); } catch(e){}
 }
 /* 〔主〕主题树展开状态：键为节点 id（一层 / 一层-序号 / 一层-序号-词） */
 let topicOpenMap = {};
 try {
-  const to = localStorage.getItem('zy.topicopen'); if (to) topicOpenMap = JSON.parse(to) || {};
+  const to = zyGet('zy.topicopen'); if (to) topicOpenMap = JSON.parse(to) || {};
 } catch(e){}
 /* 主题速查展开状态：键为主题词本身 */
 let tagOpenMap = {};
 try {
-  const tg = localStorage.getItem('zy.tagopen'); if (tg) tagOpenMap = JSON.parse(tg) || {};
+  const tg = zyGet('zy.tagopen'); if (tg) tagOpenMap = JSON.parse(tg) || {};
 } catch(e){}
 try {
-  const s = localStorage.getItem('zy.script'); if (s) SCRIPT = s;
-  const z = localStorage.getItem('zy.zi');     if (z !== null) ziOn = z === '1';
-  const th = localStorage.getItem('zy.theme'); if (th) theme = th;
+  const s = zyGet('zy.script'); if (s) SCRIPT = s;
+  const z = zyGet('zy.zi');     if (z !== null) ziOn = z === '1';
+  const th = zyGet('zy.theme'); if (th) theme = th;
 } catch(e){}
 function applyTheme(){
   document.body.setAttribute('data-theme', theme);
@@ -772,22 +804,41 @@ function applyTheme(){
   });
 }
 
+/* ---------------- 操作时间戳 ----------------
+   为了修"两台设备一增一删、同步后又复活"：光存"现在有哪些"不够，
+   还得存"每一条最后一次被改是什么时候"，合并时按时间判胜负。 */
+let STAMP = { fav: {}, read: {}, subs: {} };
+try {
+  const st = zyGet('zy.times');
+  if (st) {
+    const o = JSON.parse(st);
+    STAMP = { fav: o.fav || {}, read: o.read || {}, subs: o.subs || {} };
+  }
+} catch(e){}
+function saveTimes(){ try { zyPut('zy.times', JSON.stringify(STAMP)); } catch(e){} }
+function mark(kind, k){
+  if (!STAMP[kind]) STAMP[kind] = {};
+  STAMP[kind][k] = Date.now();
+  saveTimes();
+}
+
 /* ---------------- 收藏 ----------------
    收藏单位是「句子」不是「卦」：key = 卦号 + ':' + ci|xiang|y0..y5
    每条卦辞、大象传、每一爻各自独立收藏 */
 let fav = [];
 try {
-  const f = localStorage.getItem('zy.fav');
+  const f = zyGet('zy.fav');
   if (f) fav = JSON.parse(f).map(function(x){
     /* 兼容早期「整卦收藏」的旧数据：卦号 → 该卦卦辞 */
     return typeof x === 'number' ? x + ':ci' : x;
   }).filter(function(x){ return typeof x === 'string'; });
 } catch(e){}
-function saveFav(){ try { localStorage.setItem('zy.fav', JSON.stringify(fav)); } catch(e){} }
+function saveFav(){ try { zyPut('zy.fav', JSON.stringify(fav)); } catch(e){} }
 function isFav(k){ return fav.indexOf(k) >= 0; }
 function toggleFav(k){
   const i = fav.indexOf(k);
   if (i >= 0) fav.splice(i, 1); else fav.push(k);
+  mark('fav', k);
   saveFav(); renderSide(); renderMain();
 }
 function favCount(){ return fav.length; }
@@ -798,18 +849,19 @@ function favOfGua(n){ return fav.filter(function(k){ return k.split(':')[0] === 
    两层进度：① 卦内 i/N  ② 主题流 i/N（按标签把句子串成一条阅读流） */
 let read = new Set();
 try {
-  const r = localStorage.getItem('zy.read');
+  const r = zyGet('zy.read');
   if (r) JSON.parse(r).forEach(function(k){ if (typeof k === 'string') read.add(k); });
 } catch(e){}
-function saveRead(){ try { localStorage.setItem('zy.read', JSON.stringify([...read])); } catch(e){} }
+function saveRead(){ try { zyPut('zy.read', JSON.stringify([...read])); } catch(e){} }
 function isRead(k){ return read.has(k); }
 function toggleRead(k){
   if (read.has(k)) read.delete(k); else read.add(k);
+  mark('read', k);
   saveRead(); renderSide(); renderMain();
 }
 let curPos = null;
-try { curPos = localStorage.getItem('zy.pos'); } catch(e){}
-function setPos(k){ curPos = k; try { localStorage.setItem('zy.pos', k); } catch(e){} }
+try { curPos = zyGet('zy.pos'); } catch(e){}
+function setPos(k){ curPos = k; try { zyPut('zy.pos', k); } catch(e){} }
 
 let flowTag = null, flowIdx = 0, pendingScroll = false;
 
@@ -1291,8 +1343,8 @@ function gotoFlow(){
 /* ---------------- 义理层 ---------------- */
 const LAYER_DEF = [['chuan', '傳', '十翼互见']];
 let layers = {chuan:true};
-try { const L = localStorage.getItem('zy.layers'); if (L) layers = Object.assign(layers, JSON.parse(L)); } catch(e){}
-function saveLayers(){ try { localStorage.setItem('zy.layers', JSON.stringify(layers)); } catch(e){} }
+try { const L = zyGet('zy.layers'); if (L) layers = Object.assign(layers, JSON.parse(L)); } catch(e){}
+function saveLayers(){ try { zyPut('zy.layers', JSON.stringify(layers)); } catch(e){} }
 
 function layerRowHTML(){
   return '<div class="layers">'
@@ -1380,8 +1432,8 @@ function panelZi(g){
 
 /* ---------------- 句内折叠框 〔解〕〔用〕〔資〕 ---------------- */
 let subs = new Set();
-try { const sb = localStorage.getItem('zy.subs'); if (sb) subs = new Set(JSON.parse(sb)); } catch(e){}
-function saveSubs(){ try { localStorage.setItem('zy.subs', JSON.stringify([...subs])); } catch(e){} }
+try { const sb = zyGet('zy.subs'); if (sb) subs = new Set(JSON.parse(sb)); } catch(e){}
+function saveSubs(){ try { zyPut('zy.subs', JSON.stringify([...subs])); } catch(e){} }
 /* 〔史〕只在該句確有史事時出現：六十四卦中有史可考者不過十餘卦，
    若每句都掛一個史框，史層就成了噪音。 */
 function subDefs(kind, g, i){
@@ -1406,6 +1458,7 @@ function subAll(open){
     subDefs(p[0], g, p[1]).forEach(function(d){
       const k = g.n + ':' + p[0] + ':' + p[1] + ':' + d[0];
       if (open) subs.add(k); else subs.delete(k);
+      mark('subs', k);
     });
   });
   saveSubs(); renderMain();
@@ -1635,6 +1688,7 @@ function renderMain(){
       e.stopPropagation();
       const k = b.dataset.sub;
       if (subs.has(k)) subs.delete(k); else subs.add(k);
+      mark('subs', k);
       saveSubs(); renderMain();
     };
   });
@@ -1669,7 +1723,7 @@ function renderMain(){
   m.querySelectorAll('.progbox button').forEach(function(b){
     b.onclick = function(){
       if (b.dataset.act === 'clr') {
-        sentencesOf(g).forEach(function(s){ read.delete(s.k); });
+        sentencesOf(g).forEach(function(s){ read.delete(s.k); mark('read', s.k); });
         saveRead(); renderAll(); toast(HM('已清除本卦的已读标记'));
       }
     };
@@ -1798,13 +1852,13 @@ function renderAll(){ renderSide(); renderMain(); }
 document.getElementById('scriptSeg').onclick = function(e){
   const b = e.target.closest('button'); if (!b) return;
   SCRIPT = b.dataset.s;
-  try { localStorage.setItem('zy.script', SCRIPT); } catch(err){}
+  try { zyPut('zy.script', SCRIPT); } catch(err){}
   buildGloss(); applyScriptUI(); renderAll();
 };
 document.getElementById('ziSeg').onclick = function(e){
   const b = e.target.closest('button'); if (!b) return;
   ziOn = b.dataset.z === '1';
-  try { localStorage.setItem('zy.zi', ziOn ? '1' : '0'); } catch(err){}
+  try { zyPut('zy.zi', ziOn ? '1' : '0'); } catch(err){}
   applyScriptUI(); renderMain();
 };
 document.getElementById('modeSeg').onclick = function(e){
@@ -1816,7 +1870,7 @@ document.getElementById('modeSeg').onclick = function(e){
 document.getElementById('themeSeg').onclick = function(e){
   const b = e.target.closest('button'); if (!b) return;
   theme = b.dataset.t;
-  try { localStorage.setItem('zy.theme', theme); } catch(err){}
+  try { zyPut('zy.theme', theme); } catch(err){}
   applyTheme();
 };
 /* 搜索：结果直接显示在搜索框正下方的浮层里，与左侧目录是否打开无关 */
@@ -2063,6 +2117,7 @@ function acctSnap() {
     fav: fav.slice(),
     read_keys: Array.from(read),
     subs: Array.from(subs),
+    stamps: JSON.parse(JSON.stringify(STAMP)),
     layers: Object.assign({}, layers),
     prefs: { theme: theme, script: SCRIPT, zi: ziOn ? 1 : 0, pos: curPos || null },
     ts: Date.now()
@@ -2074,22 +2129,45 @@ function acctSign(d) {
     JSON.stringify(d.layers), JSON.stringify(d.prefs)
   ].join('|');
 }
+/* 逐条比时间，而不是无脑并集：
+   一条只在 A 里出现时，不能直接当成"B 没同步到"，要先看 B 最后动它的时间。
+   B 删得比 A 加得晚 → 说明是删掉的，不该复活；反之才并入。
+   两端都没有单条时间戳（旧数据）时无从判断，保守保留。 */
+function lww(listA, listB, tsA, tsB, fallbackA, fallbackB) {
+  var seen = {}, out = [];
+  (listA || []).forEach(function (k) { if (typeof k === 'string') seen[k] = 1; });
+  (listB || []).forEach(function (k) { if (typeof k === 'string') seen[k] = 1; });
+  Object.keys(seen).forEach(function (k) {
+    var inA = (listA || []).indexOf(k) >= 0;
+    var inB = (listB || []).indexOf(k) >= 0;
+    if (inA && inB) { out.push(k); return; }
+    var ma = (tsA && tsA[k]) || 0;
+    var mb = (tsB && tsB[k]) || 0;
+    if (!ma && !mb) { out.push(k); return; }
+    if (inA) { if (mb > (ma || fallbackA || 0)) return; out.push(k); }
+    else { if (ma > (mb || fallbackB || 0)) return; out.push(k); }
+  });
+  return out;
+}
+function mergeTs(x, y) {
+  var o = {};
+  [x, y].forEach(function (m) {
+    if (!m) return;
+    Object.keys(m).forEach(function (k) { o[k] = Math.max(o[k] || 0, m[k] || 0); });
+  });
+  return o;
+}
 function acctMerge(a, b) {
   if (!b) return a;
   if (!a) return b;
-  function uni(x, y) {
-    var m = {}, out = [];
-    (x || []).concat(y || []).forEach(function (k) {
-      if (typeof k === 'string' && !m[k]) { m[k] = 1; out.push(k); }
-    });
-    return out;
-  }
-  /* 单值偏好无法并集：谁改得晚听谁的 */
+  var sa = a.stamps || {}, sb = b.stamps || {};
+  /* 单值偏好无法逐条比：谁改得晚听谁的 */
   var newer = (b.ts || 0) > (a.ts || 0) ? b : a;
   return {
-    fav: uni(a.fav, b.fav),
-    read_keys: uni(a.read_keys, b.read_keys),
-    subs: uni(a.subs, b.subs),
+    fav: lww(a.fav, b.fav, sa.fav, sb.fav, a.ts, b.ts),
+    read_keys: lww(a.read_keys, b.read_keys, sa.read, sb.read, a.ts, b.ts),
+    subs: lww(a.subs, b.subs, sa.subs, sb.subs, a.ts, b.ts),
+    stamps: { fav: mergeTs(sa.fav, sb.fav), read: mergeTs(sa.read, sb.read), subs: mergeTs(sa.subs, sb.subs) },
     layers: Object.assign({}, a.layers || {}, b.layers || {}),
     prefs: newer.prefs || a.prefs,
     ts: Math.max(a.ts || 0, b.ts || 0)
@@ -2105,22 +2183,26 @@ function acctApply(d) {
     (d.read_keys || []).forEach(function (k) { read.add(k); });
     subs.clear();
     (d.subs || []).forEach(function (k) { subs.add(k); });
+    if (d.stamps) {
+      STAMP = { fav: d.stamps.fav || {}, read: d.stamps.read || {}, subs: d.stamps.subs || {} };
+      saveTimes();
+    }
     if (d.layers && Object.keys(d.layers).length) layers = Object.assign({}, d.layers);
     saveFav(); saveRead(); saveSubs(); saveLayers();
     var p = d.prefs || {};
     if (p.theme && p.theme !== theme) {
       theme = p.theme;
-      try { localStorage.setItem('zy.theme', theme); } catch (e) {}
+      try { zyPut('zy.theme', theme); } catch (e) {}
       applyTheme();
     }
     if (p.script && p.script !== SCRIPT) {
       SCRIPT = p.script;
-      try { localStorage.setItem('zy.script', SCRIPT); } catch (e) {}
+      try { zyPut('zy.script', SCRIPT); } catch (e) {}
       buildGloss(); applyScriptUI();
     }
     if (p.zi != null) {
       ziOn = !!p.zi;
-      try { localStorage.setItem('zy.zi', ziOn ? '1' : '0'); } catch (e) {}
+      try { zyPut('zy.zi', ziOn ? '1' : '0'); } catch (e) {}
       applyScriptUI();
     }
     if (p.pos) setPos(p.pos);
@@ -2305,7 +2387,21 @@ setInterval(function () {
 }, 5000);
 
 if (window.ZYAuth) {
+  var acctWas = null;
   ZYAuth.onChange(function (s) {
+    var on = !!(s && s.user);
+    /* 登录：把这次会话攒的数据搬进持久层；登出：把持久层清干净。
+       两件事都不能少——少了前者，登录瞬间会"丢收藏"；少了后者，
+       下次不登录还能看见上次的东西，就违背了"登录才有记忆"。 */
+    if (on && acctWas === false) zyPromote();
+    if (!on && acctWas === true) {
+      zyWipe();
+      fav.length = 0; read.clear(); subs.clear();
+      STAMP = { fav: {}, read: {}, subs: {} };
+      acctSig = '';
+      renderAll();
+    }
+    acctWas = on;
     var b = document.getElementById('acctBtn');
     if (!b) return;
     if (s && s.user && s.user.email) {
@@ -2322,6 +2418,20 @@ if (window.ZYAuth) {
     if (s && !acctSig) acctSync();
   }).catch(function () {});
 }
+
+/* 复制时附出处。禁止复制是拦不住的（禁用脚本就绕过了），
+   但让"搬走的内容"自带来源，至少能让读者找到原件。 */
+document.addEventListener('copy', function (e) {
+  var ae = document.activeElement;
+  if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT')) return;  /* 站内复制按钮走这条，别动它 */
+  var sel = '';
+  try { sel = String(window.getSelection ? window.getSelection() : ''); } catch (err) {}
+  if (sel.trim().length < 30) return;
+  if (!e.clipboardData) return;
+  e.clipboardData.setData('text/plain',
+    sel + '\n\n—— 引自「读易 · 周易精读」' + location.origin + location.pathname);
+  e.preventDefault();
+});
 </script>
 <script src="mode.js?v=8"></script>
 
