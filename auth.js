@@ -149,6 +149,36 @@
   }
 
   /* ---------------- 对外 ---------------- */
+  /* 确认邮件的链接是 Site_URL#access_token=...&refresh_token=...：
+     Supabase 把登录凭证直接放在链接里（隐式流）。如果用户把 Site URL 配成
+     本站，点完邮件就等于已登录——这里负责把链接吃下来，别浪费。 */
+  function handleHash() {
+    var h = location.hash || '';
+    if (h.indexOf('access_token=') < 0) return false;
+    var m = {};
+    h.replace(/^#/, '').split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) m[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
+    });
+    if (!m.access_token) return false;
+    var ein = parseInt(m.expires_in || '3600', 10);
+    var s = adopt({
+      access_token: m.access_token,
+      refresh_token: m.refresh_token,
+      expires_at: sec() + ein
+    });
+    if (!s) return false;
+    /* fragment 里没有用户资料，单独取一次 */
+    req('/auth/v1/user', { token: m.access_token }).then(function (u) {
+      if (sess && sess.access_token === m.access_token) {
+        sess.user = u;
+        writeSess(sess);
+      }
+    }).catch(function () {});
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    return true;
+  }
+
   window.ZYAuth = {
     signUp: signUp,
     signIn: signIn,
@@ -158,8 +188,9 @@
     user: user,
     session: session,
     onChange: function (fn) { listeners.push(fn); try { fn(sess); } catch (e) {} },
-    /* 打开页面时用本地 refresh_token 静默续期，失败就当未登录 */
+    /* 打开页面时先看是不是从确认邮件跳回来的；再用本地 refresh_token 静默续期 */
     boot: function () {
+      if (handleHash()) return Promise.resolve(sess);
       if (!sess) { emit(); return Promise.resolve(null); }
       return token().then(function () { return sess; }).catch(function () { return null; });
     }
