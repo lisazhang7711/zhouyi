@@ -436,6 +436,40 @@ main{flex:1 1 auto;min-width:0;padding:22px 30px 90px;max-width:920px;margin:0 a
 .tbtn:hover{background:var(--hover)}
 .tbtn.on{background:var(--ink);color:var(--onink)}
 body.sideoff aside{display:none}
+
+/* ---- 账号与同步：弹层，不占顶栏宽度 ---- */
+#acctBtn{margin-left:auto}
+.acct-mask{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(24,20,16,.42)}
+.acct-mask[hidden]{display:none}
+.acct-panel{width:100%;max-width:390px;background:var(--card);color:var(--ink);
+  border:1px solid var(--line2);border-radius:10px;padding:18px 20px 20px;
+  box-shadow:0 18px 50px var(--shadow)}
+.acct-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.acct-head b{font-size:15px;letter-spacing:1px}
+.acct-head button{background:transparent;border:0;color:var(--ink3);font-size:17px;
+  line-height:1;cursor:pointer;padding:2px 4px}
+.acct-head button:hover{color:var(--ink)}
+.acct-sub{font-size:12px;color:var(--ink3);line-height:1.7;margin-bottom:12px}
+.acct-field{margin-bottom:10px}
+.acct-field label{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
+.acct-field input{width:100%;border:1px solid var(--line2);background:var(--paper);color:var(--ink);
+  border-radius:6px;padding:8px 10px;font-family:inherit;font-size:14px}
+.acct-field input:focus{outline:1px solid var(--blue)}
+.acct-row{display:flex;gap:8px;margin-top:12px}
+.acct-row button{flex:1;border:1px solid var(--line2);background:transparent;color:var(--ink);
+  border-radius:6px;padding:9px 10px;font-family:inherit;font-size:14px;cursor:pointer}
+.acct-row button:hover{background:var(--hover)}
+.acct-row button.primary{background:var(--ink);color:var(--onink);border-color:var(--ink)}
+.acct-row button:disabled{opacity:.45;cursor:default}
+.acct-stat{font-size:12.5px;color:var(--ink2);line-height:1.7;margin-top:11px;min-height:18px;word-break:break-all}
+.acct-stat.err{color:var(--red)}
+.acct-stat.ok{color:var(--wx-wood)}
+.acct-kv{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);
+  padding:5px 0;border-bottom:1px dashed var(--line)}
+.acct-kv b{color:var(--ink);font-weight:600}
+.acct-who{font-size:13px;color:var(--ink);word-break:break-all;margin:2px 0 10px}
+body.sideoff aside{display:none}
 body.aioff #ai{display:none}
 
 /* ---- 右侧小助手：常驻右栏，不是悬浮按钮 ---- */
@@ -596,6 +630,7 @@ body.aioff #ai{display:none}
   </div>
   <button class="tbtn" id="mainWBtn" title="">⇔ <span id="mainWVal">标准</span></button>
   <button class="tbtn on" id="aiTog" title="显示或隐藏右侧小助手">助手</button>
+  <button class="tbtn" id="acctBtn" title="登录后收藏与阅读进度跨设备同步">登录</button>
 </header>
 <div id="qdrop"></div>
 
@@ -638,6 +673,16 @@ body.aioff #ai{display:none}
 <div id="tip"></div>
 <div id="toast"></div>
 
+<div class="acct-mask" id="acctMask" hidden>
+  <div class="acct-panel" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+    <div class="acct-head">
+      <b id="acctTitle">账号与同步</b>
+      <button id="acctClose" aria-label="关闭">✕</button>
+    </div>
+    <div id="acctBody"></div>
+  </div>
+</div>
+
 <script src="han.js?v=15"></script>
 <script src="gloss.js?v=15"></script>
 <script src="data.js?v=15"></script>
@@ -656,6 +701,7 @@ body.aioff #ai{display:none}
 <script src="topic.js?v=15"></script>
 <script src="shiyi.js?v=15"></script>
 <script src="yz.js?v=15"></script>
+<script src="auth.js?v=15"></script>
 <script>
 /* 八卦取象（说卦传节要，公有领域） */
 const XIANG_TRI = {
@@ -2003,6 +2049,279 @@ buildGloss();
 applyScriptUI();
 renderAll();
 initAI();
+
+/* ================= 账号与同步 =================
+   原则：本地永远是可用的（未登录也能读经、收藏），登录只多一件事——
+   把同一份收藏和进度带到另一台设备上。所以任何同步失败都只提示，不清本地。 */
+var acctApplying = false;   /* apply 期间不回推，避免自己写自己 */
+var acctSig = '';           /* 上次同步时的内容指纹 */
+var acctLast = null;
+var acctTimer = null;
+
+function acctSnap() {
+  return {
+    fav: fav.slice(),
+    read_keys: Array.from(read),
+    subs: Array.from(subs),
+    layers: Object.assign({}, layers),
+    prefs: { theme: theme, script: SCRIPT, zi: ziOn ? 1 : 0, pos: curPos || null },
+    ts: Date.now()
+  };
+}
+function acctSign(d) {
+  return [
+    d.fav.join(','), d.read_keys.join(','), d.subs.join(','),
+    JSON.stringify(d.layers), JSON.stringify(d.prefs)
+  ].join('|');
+}
+function acctMerge(a, b) {
+  if (!b) return a;
+  if (!a) return b;
+  function uni(x, y) {
+    var m = {}, out = [];
+    (x || []).concat(y || []).forEach(function (k) {
+      if (typeof k === 'string' && !m[k]) { m[k] = 1; out.push(k); }
+    });
+    return out;
+  }
+  /* 单值偏好无法并集：谁改得晚听谁的 */
+  var newer = (b.ts || 0) > (a.ts || 0) ? b : a;
+  return {
+    fav: uni(a.fav, b.fav),
+    read_keys: uni(a.read_keys, b.read_keys),
+    subs: uni(a.subs, b.subs),
+    layers: Object.assign({}, a.layers || {}, b.layers || {}),
+    prefs: newer.prefs || a.prefs,
+    ts: Math.max(a.ts || 0, b.ts || 0)
+  };
+}
+function acctApply(d) {
+  if (!d) return;
+  acctApplying = true;
+  try {
+    fav.length = 0;
+    (d.fav || []).forEach(function (k) { if (fav.indexOf(k) < 0) fav.push(k); });
+    read.clear();
+    (d.read_keys || []).forEach(function (k) { read.add(k); });
+    subs.clear();
+    (d.subs || []).forEach(function (k) { subs.add(k); });
+    if (d.layers && Object.keys(d.layers).length) layers = Object.assign({}, d.layers);
+    saveFav(); saveRead(); saveSubs(); saveLayers();
+    var p = d.prefs || {};
+    if (p.theme && p.theme !== theme) {
+      theme = p.theme;
+      try { localStorage.setItem('zy.theme', theme); } catch (e) {}
+      applyTheme();
+    }
+    if (p.script && p.script !== SCRIPT) {
+      SCRIPT = p.script;
+      try { localStorage.setItem('zy.script', SCRIPT); } catch (e) {}
+      buildGloss(); applyScriptUI();
+    }
+    if (p.zi != null) {
+      ziOn = !!p.zi;
+      try { localStorage.setItem('zy.zi', ziOn ? '1' : '0'); } catch (e) {}
+      applyScriptUI();
+    }
+    if (p.pos) setPos(p.pos);
+    renderAll();
+  } finally {
+    acctApplying = false;
+  }
+}
+
+function acctErr(e) {
+  var m = (e && (e.message || e.error_description)) || '出错了';
+  if (/Invalid login credentials/i.test(m)) return '邮箱或密码不对';
+  if (/Email not confirmed/i.test(m)) return '邮箱还没确认，先去邮件里点确认链接';
+  if (/already registered|already been registered|User already/i.test(m)) return '这个邮箱已经注册过，直接登录就行';
+  if (/Password should be at least/i.test(m)) return '密码太短，至少 6 位';
+  if (/Unable to validate email|invalid format/i.test(m)) return '邮箱格式不对';
+  if (/Could not find the table|PGRST205/i.test(m)) return '云端数据表还没建，先在 Supabase 执行 supabase-zhouyi.sql';
+  if (/JWT expired|invalid[_ ]?token|Invalid Refresh Token/i.test(m)) return '登录已过期，重新登录一次';
+  if (/fetch|NetworkError|Failed to fetch/i.test(m)) return '连不上服务器，检查网络后重试';
+  if (/rate limit|too many/i.test(m)) return '试得太频繁了，等一分钟再试';
+  return m;
+}
+
+function acctStatus(text, kind) {
+  var el = document.querySelector('#acctBody .acct-stat');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'acct-stat' + (kind ? ' ' + kind : '');
+}
+
+function acctCounts(d) {
+  d = d || acctSnap();
+  var map = { acctFav: d.fav.length, acctRead: d.read_keys.length, acctSub: d.subs.length };
+  Object.keys(map).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = map[id];
+  });
+}
+
+function acctQueue() {
+  if (!window.ZYAuth || !ZYAuth.session() || acctApplying) return;
+  clearTimeout(acctTimer);
+  acctTimer = setTimeout(function () { acctPush(true); }, 2200);
+}
+
+function acctPush(silent) {
+  if (!window.ZYAuth || !ZYAuth.session() || acctApplying) return Promise.resolve();
+  var d = acctSnap();
+  return ZYAuth.push(d).then(function () {
+    acctSig = acctSign(d);
+    acctLast = new Date();
+    acctCounts(d);
+    if (!silent) acctStatus('已同步到云端', 'ok');
+  }).catch(function (e) {
+    acctStatus('同步失败：' + acctErr(e), 'err');
+  });
+}
+
+/* 登录后的第一次：先取云端、与本地并集、再写回，这样两台设备都不会丢东西 */
+function acctSync() {
+  acctStatus('正在取回云端数据…');
+  return ZYAuth.pull().then(function (r) {
+    var merged = acctMerge(acctSnap(), (r && r.data) || null);
+    acctApply(merged);
+    return ZYAuth.push(merged).then(function () {
+      acctSig = acctSign(merged);
+      acctLast = new Date();
+      acctStatus('已同步：收藏 ' + merged.fav.length + ' 条 · 已读 ' + merged.read_keys.length + ' 句', 'ok');
+      acctRender();
+    });
+  }).catch(function (e) {
+    acctStatus('同步失败：' + acctErr(e), 'err');
+    acctRender();
+  });
+}
+
+function acctRender() {
+  var body = document.getElementById('acctBody');
+  if (!body) return;
+  var s = window.ZYAuth ? ZYAuth.session() : null;
+
+  if (!s) {
+    body.innerHTML =
+      '<div class="acct-sub">登录后，收藏、已读进度、折叠框状态和界面偏好会跟着账号走，' +
+      '换手机或清缓存都不丢。不登录也能正常读，数据只存在这台设备上。</div>' +
+      '<div class="acct-field"><label for="acctEmail">邮箱</label>' +
+      '<input id="acctEmail" type="email" autocomplete="username" placeholder="you@example.com"></div>' +
+      '<div class="acct-field"><label for="acctPwd">密码</label>' +
+      '<input id="acctPwd" type="password" autocomplete="current-password" placeholder="至少 6 位"></div>' +
+      '<div class="acct-row"><button class="primary" id="acctDoLogin">登录</button>' +
+      '<button id="acctDoSignup">注册新账号</button></div>' +
+      '<div class="acct-stat"></div>';
+    var em = body.querySelector('#acctEmail');
+    var pw = body.querySelector('#acctPwd');
+    body.querySelector('#acctDoLogin').onclick = function () {
+      var b = this;
+      if (!em.value.trim() || !pw.value) { acctStatus('邮箱和密码都要填', 'err'); return; }
+      b.disabled = true; acctStatus('正在登录…');
+      ZYAuth.signIn(em.value.trim(), pw.value).then(function () {
+        acctRender();
+        return acctSync();
+      }).catch(function (e) {
+        acctStatus(acctErr(e), 'err');
+        b.disabled = false;
+      });
+    };
+    body.querySelector('#acctDoSignup').onclick = function () {
+      var b = this;
+      if (!em.value.trim() || !pw.value) { acctStatus('邮箱和密码都要填', 'err'); return; }
+      if (pw.value.length < 6) { acctStatus('密码太短，至少 6 位', 'err'); return; }
+      b.disabled = true; acctStatus('正在创建账号…');
+      ZYAuth.signUp(em.value.trim(), pw.value).then(function (r) {
+        if (r.needConfirm) {
+          acctStatus('账号已创建。去邮箱点确认链接，然后回来登录。', 'ok');
+          b.disabled = false;
+        } else {
+          acctRender();
+          return acctSync();
+        }
+      }).catch(function (e) {
+        acctStatus(acctErr(e), 'err');
+        b.disabled = false;
+      });
+    };
+    pw.onkeydown = function (e) {
+      if (e.key === 'Enter') body.querySelector('#acctDoLogin').click();
+    };
+    return;
+  }
+
+  var u = s.user || {};
+  body.innerHTML =
+    '<div class="acct-who">' + (u.email || '已登录') + '</div>' +
+    '<div class="acct-kv"><span>收藏</span><b id="acctFav">0</b></div>' +
+    '<div class="acct-kv"><span>已读句子</span><b id="acctRead">0</b></div>' +
+    '<div class="acct-kv"><span>展开的折叠框</span><b id="acctSub">0</b></div>' +
+    '<div class="acct-row"><button class="primary" id="acctNow">立即同步</button>' +
+    '<button id="acctOut">退出登录</button></div>' +
+    '<div class="acct-stat"></div>';
+  acctCounts();
+  body.querySelector('#acctNow').onclick = function () {
+    var b = this; b.disabled = true;
+    acctStatus('正在同步…');
+    acctPush(false).then(function () { b.disabled = false; });
+  };
+  body.querySelector('#acctOut').onclick = function () {
+    ZYAuth.signOut().then(function () {
+      acctSig = '';
+      acctRender();
+      acctStatus('已退出。本地数据保留，只是不再上传。', 'ok');
+      acctRender();
+    });
+  };
+}
+
+function acctToggle(open) {
+  var m = document.getElementById('acctMask');
+  if (!m) return;
+  m.hidden = !open;
+  if (open) {
+    acctRender();
+    var f = document.getElementById('acctEmail');
+    if (f) f.focus();
+  }
+}
+
+document.getElementById('acctBtn').onclick = function () { acctToggle(true); };
+document.getElementById('acctClose').onclick = function () { acctToggle(false); };
+document.getElementById('acctMask').onclick = function (e) {
+  if (e.target === this) acctToggle(false);
+};
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') acctToggle(false);
+});
+
+/* 本地任何改动（收藏、已读、折叠框、主题…）都延迟回推；
+   另外每 5 秒比一次指纹，兜住不是鼠标点出来的改动（键盘操作、自动跳转）。 */
+document.addEventListener('click', function () { setTimeout(acctQueue, 80); });
+setInterval(function () {
+  if (!window.ZYAuth || !ZYAuth.session() || acctApplying) return;
+  if (acctSig && acctSign(acctSnap()) !== acctSig) acctQueue();
+}, 5000);
+
+if (window.ZYAuth) {
+  ZYAuth.onChange(function (s) {
+    var b = document.getElementById('acctBtn');
+    if (!b) return;
+    if (s && s.user && s.user.email) {
+      b.textContent = s.user.email.split('@')[0].slice(0, 10);
+      b.title = '已登录：' + s.user.email + '（点开管理同步）';
+      b.classList.add('on');
+    } else {
+      b.textContent = '登录';
+      b.title = '登录后收藏与阅读进度跨设备同步';
+      b.classList.remove('on');
+    }
+  });
+  ZYAuth.boot().then(function (s) {
+    if (s && !acctSig) acctSync();
+  }).catch(function () {});
+}
 </script>
 <script src="mode.js?v=8"></script>
 
